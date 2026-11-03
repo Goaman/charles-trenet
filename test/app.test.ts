@@ -99,3 +99,40 @@ describe("legacy URLs", () => {
     expect(resolveLegacyUrl("http://charles-trenet.org/modules.php?name=News&file=article&sid=5", lookup)).toBe("/a/5");
   });
 });
+
+describe("SEO", () => {
+  test("image descriptions from file names, accents restored", async () => {
+    const { describeFile, describeImages } = await import("../src/alt.ts");
+    expect(describeFile("/media/album-etoile-1961.jpg")).toBe("Album étoile 1961");
+    expect(describeFile("/media/quand-j-etais-petit.jpg")).toBe("Quand j’étais petit");
+    expect(describeFile("/media/palais-congres-1989-3.jpg")).toBe("Palais Congrès 1989");
+    expect(describeFile("/media/0m4zjjo5.jpeg")).toBeNull();
+    expect(describeFile("/media/cocteaublanc.jpg")).toBeNull();
+    expect(describeImages('<img src="/media/0m4zjjo5.jpeg" alt="">', "Un <titre>")).toBe('<img src="/media/0m4zjjo5.jpeg" alt="Illustration : Un &lt;titre&gt;">');
+    expect(describeImages('<img src="/media/x.jpg" alt="Déjà">', "T")).toBe('<img src="/media/x.jpg" alt="Déjà">');
+  });
+  test("no content image without a description", async () => {
+    const a = db.query<{ id: number; slug: string }, []>("SELECT id, slug FROM articles WHERE body_html LIKE '%<img%src=\"/media/%' LIMIT 1").get()!;
+    const body = await (await get(`/articles/${a.id}-${a.slug}`)).text();
+    expect(body).toContain("<img");
+    expect(body.slice(body.indexOf("<main"))).not.toMatch(/<img\b[^>]*src="\/media\/[^>]*alt=""/);
+  });
+  test("sort orders point to one canonical list", async () => {
+    const body = await (await get("/articles/populaires")).text();
+    expect(body).toContain('<link rel="canonical" href="https://www.charles-trenet.net/articles">');
+    expect(body).toContain("<title>Les articles les plus lus · Charles Trenet</title>");
+  });
+  test("forum threads: distinct titles and DiscussionForumPosting", async () => {
+    const titles = await Promise.all([2, 3].map(async (id) => {
+      const t = db.query<{ slug: string }, [number]>("SELECT slug FROM threads WHERE id = ?").get(id)!;
+      const body = await (await get(`/forum/sujet/${id}-${t.slug}`)).text();
+      const ld = [...body.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map((m) => JSON.parse(m[1]!));
+      expect(ld.map((x) => x["@type"])).toEqual(expect.arrayContaining(["DiscussionForumPosting", "BreadcrumbList"]));
+      const post = ld.find((x) => x["@type"] === "DiscussionForumPosting");
+      expect(post.author.name).toBeTruthy();
+      expect(post.text.length).toBeGreaterThan(10);
+      return /<title>([^<]*)<\/title>/.exec(body)![1];
+    }));
+    expect(titles[0]).not.toBe(titles[1]);
+  });
+});

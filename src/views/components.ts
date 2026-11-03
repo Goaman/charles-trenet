@@ -1,6 +1,7 @@
 import { articleUrl, queries, type ArticleSummary, type Song, type Theme } from "../db.ts";
 import { formatDate, formatNumber, hue, year } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
+import { SITE_URL } from "./layout.ts";
 
 let themeCache: Map<number, Theme> | null = null;
 export function themesById(): Map<number, Theme> {
@@ -55,7 +56,24 @@ export function pagination(page: number, pages: number, href: (p: number) => str
 }
 
 export function breadcrumbs(items: [string, string?][]): SafeHtml {
-  return html`<nav class="crumbs" aria-label="Fil d’Ariane"><ol>${items.map(([label, href]) => (href ? html`<li><a href="${href}">${label}</a></li>` : html`<li aria-current="page">${label}</li>`))}</ol></nav>`;
+  // schema.org BreadcrumbList (the last item, the current page, has no URL)
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [["Accueil", "/"] as [string, string?], ...items].map(([name, href], i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name,
+      ...(href ? { item: SITE_URL + href } : {}),
+    })),
+  };
+  return html`<nav class="crumbs" aria-label="Fil d’Ariane"><ol>${items.map(([label, href]) => (href ? html`<li><a href="${href}">${label}</a></li>` : html`<li aria-current="page">${label}</li>`))}</ol></nav>
+${jsonLd(ld)}`;
+}
+
+/** A schema.org block. JSON-LD is data, not script: allowed by the CSP. */
+export function jsonLd(data: unknown): SafeHtml {
+  return raw(`<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`);
 }
 
 export function monogram(name: string): SafeHtml {

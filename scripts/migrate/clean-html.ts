@@ -82,6 +82,9 @@ export function cleanHtml(input: string, opts: CleanOptions): string {
     // Unterminated comments ("<!-- keywords <center>") swallow markup: cut them at the next tag.
     .replace(/<!--((?:(?!-->)[^<])*)(?=<)/g, (m) => (m.includes("-->") ? m : ""))
     .replace(/<!--[\s\S]*?-->/g, "")
+    // A stray "</" right before a tag ("</<img src=…>") makes the parser read the
+    // whole tag as a bogus comment, which then escapes cleaning.
+    .replace(/<\/(?=\s*<)/g, "")
     .replace(/<x-claris[^>]*>/gi, "")
     .replace(/<!doctype[^>]*>/gi, "")
     .replace(/<(script|style|head|title)\b[\s\S]*?<\/\1>/gi, "");

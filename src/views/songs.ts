@@ -1,8 +1,8 @@
 import { articleUrl, canonicalTextUrl, queries, songUrl, textUrl, type Song, type Text } from "../db.ts";
-import { formatDate, plural } from "../format.ts";
+import { formatDate, plural, summary } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
 import { breadcrumbs, pageHeader, songBadges } from "./components.ts";
-import { layout } from "./layout.ts";
+import { layout, SITE_URL } from "./layout.ts";
 
 export interface SongFilters {
   q: string;
@@ -158,6 +158,7 @@ export function renderSong(s: Song): string {
       "@context": "https://schema.org",
       "@type": "MusicComposition",
       name: s.title,
+      url: SITE_URL + songUrl(s),
       composer: s.performed_only ? undefined : { "@type": "Person", name: "Charles Trenet" },
       dateCreated: s.year ? String(s.year) : undefined,
       publisher: s.publisher ?? undefined,
@@ -180,7 +181,7 @@ export function renderText(t: Text): string {
 </article>`;
   return layout({
     title: t.title,
-    description: `${KIND_LABEL[t.kind] ?? "Texte"} — ${t.plain.split("\n").slice(0, 2).join(" / ").slice(0, 150)}…`,
+    description: summary(`${KIND_LABEL[t.kind] ?? "Texte"} de ${t.author} : « ${t.plain.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 6).join(" / ")} »`, 160),
     path: textUrl(t),
     section: "chansons",
     body,
@@ -205,5 +206,11 @@ ${pageHeader({
 <div class="text-groups">
 ${groups.filter(([, , list]) => list.length).map(([kind, label, list]) => html`<section id="${kind}"><h2>${label} <span class="muted">${list.length}</span></h2><ul class="plain">${list.map((t) => html`<li><a href="${canonicalTextUrl(t)}">${t.title}</a>${t.author !== "Charles Trenet" ? html` <span class="muted">— ${t.author}</span>` : ""}</li>`)}</ul></section>`)}
 </div>`;
-  return layout({ title: "Poèmes, lettres et documents", path: "/textes", section: "chansons", body });
+  return layout({
+    title: "Poèmes, lettres et documents",
+    description: "Poèmes de jeunesse de Charles Trenet, lettres de Paul Fort et de Max-Pol Fouchet, chansons de ses amis et documents : les textes de l’archive hors du catalogue des chansons.",
+    path: "/textes",
+    section: "chansons",
+    body,
+  });
 }

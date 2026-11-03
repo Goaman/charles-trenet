@@ -1,8 +1,8 @@
 import { meta, pagedUrl, queries, songUrl, stats, threadUrl, type Forum, type SearchHit, type Thread } from "../db.ts";
-import { formatDate, formatMonth, formatNumber, plural, year } from "../format.ts";
+import { formatDate, formatMonth, formatNumber, plural, summary, year } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
 import { breadcrumbs, monogram, pageHeader, pagination } from "./components.ts";
-import { layout } from "./layout.ts";
+import { layout, SITE_URL, TRENET } from "./layout.ts";
 
 // --- Chronologie ---------------------------------------------------------------
 
@@ -37,6 +37,7 @@ ${rows.map((r, i) => {
     path: "/chronologie",
     section: "chronologie",
     body,
+    jsonLd: { "@context": "https://schema.org", ...TRENET, mainEntityOfPage: `${SITE_URL}/chronologie` },
   });
 }
 
@@ -63,7 +64,13 @@ ${archiveNotice}
   <header class="section-head"><h2>Les discussions les plus lues</h2></header>
   ${threadTable(top, true)}
 </section>`;
-  return layout({ title: "Le forum (archives)", path: "/forum", section: "forum", body });
+  return layout({
+    title: "Le forum (archives)",
+    description: `Les archives du forum des amis de Charles Trenet : ${formatNumber(stats.threads)} discussions et ${formatNumber(stats.posts)} messages de 2002 à 2021 sur ses chansons, ses disques, ses concerts et ses films.`,
+    path: "/forum",
+    section: "forum",
+    body,
+  });
 }
 
 function threadTable(threads: Thread[], showForum = false): SafeHtml {
@@ -85,10 +92,26 @@ ${pageHeader({ crumbs: breadcrumbs([["Forum", "/forum"], [f.name]]), kicker: "Fo
 ${archiveNotice}
 ${threadTable(threads)}
 ${pagination(page, pages, (p) => pagedUrl(`/forum/${f.slug}`, p))}`;
-  return layout({ title: page > 1 ? `${f.name} — page ${page}` : f.name, path: pagedUrl(`/forum/${f.slug}`, page), section: "forum", body });
+  const first = threads[0], last = threads.at(-1);
+  return layout({
+    title: page > 1 ? `Forum ${f.name} — page ${page}` : `Forum ${f.name}`,
+    description: summary(`${f.description ? `${f.description} ` : ""}${page > 1 ? `Page ${page} sur ${pages} : ` : ""}${plural(f.thread_count, "discussion", "discussions")} archivées${first && last ? `, de « ${first.subject} » à « ${last.subject} »` : ""}.`, 200),
+    path: pagedUrl(`/forum/${f.slug}`, page),
+    section: "forum",
+    body,
+  });
 }
 
 const POSTS_PER_PAGE = 25;
+
+/** Subjects used by several threads ("Bienvenue !"): their titles get a date. */
+let dupSubjects: Set<string> | null = null;
+function duplicateSubjects(): Set<string> {
+  if (dupSubjects) return dupSubjects;
+  const seen = new Map<string, number>();
+  for (const t of queries.allThreads.all()) seen.set(t.subject.toLowerCase(), (seen.get(t.subject.toLowerCase()) ?? 0) + 1);
+  return (dupSubjects = new Set([...seen].filter(([, n]) => n > 1).map(([s]) => s)));
+}
 export function renderThread(t: Thread, page: number): string | null {
   const pages = Math.max(1, Math.ceil(t.post_count / POSTS_PER_PAGE));
   if (page > pages) return null;
@@ -104,7 +127,38 @@ ${pageHeader({ crumbs: breadcrumbs([["Forum", "/forum"], [forum.name, `/forum/${
 </ol>
 ${pagination(page, pages, (p) => pagedUrl(threadUrl(t), p))}
 ${archiveNotice}`;
-  return layout({ title: t.subject, description: `Forum ${forum.name} — discussion ouverte par ${t.author} le ${formatDate(t.created_at)}.`, path: pagedUrl(threadUrl(t), page), section: "forum", body });
+  const opening = page === 1 ? posts[0] : queries.posts.all(t.id, 1, 0)[0];
+  // "— forum": a thread can share its subject with a song ("Les filles de chez nous")
+  const title = `${t.subject}${duplicateSubjects().has(t.subject.toLowerCase()) ? ` (${formatDate(t.created_at)})` : ""} — forum ${forum.name}${page > 1 ? `, page ${page}` : ""}`;
+  return layout({
+    title,
+    description: summary(`${page > 1 ? `Page ${page}. ` : ""}${t.author}, ${formatDate(t.created_at)} : ${(opening && summary(opening.body_html, 400)) || t.subject}`),
+    path: pagedUrl(threadUrl(t), page),
+    section: "forum",
+    body,
+    // schema.org: Google's "Discussions and forums" results
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "DiscussionForumPosting",
+      headline: t.subject,
+      url: SITE_URL + threadUrl(t),
+      author: { "@type": "Person", name: t.author },
+      datePublished: t.created_at,
+      text: (opening && summary(opening.body_html, 2000)) || t.subject,
+      isPartOf: { "@type": "WebPage", name: `Forum ${forum.name}`, url: `${SITE_URL}/forum/${forum.slug}` },
+      interactionStatistic: [
+        { "@type": "InteractionCounter", interactionType: "https://schema.org/CommentAction", userInteractionCount: t.post_count - 1 },
+        { "@type": "InteractionCounter", interactionType: "https://schema.org/ViewAction", userInteractionCount: t.legacy_views },
+      ],
+      comment: posts.filter((p) => p.position > 1).map((p) => ({
+        "@type": "Comment",
+        author: { "@type": "Person", name: p.author },
+        datePublished: p.posted_at,
+        text: summary(p.body_html, 1000),
+        url: `${SITE_URL}${pagedUrl(threadUrl(t), page)}#message-${p.position}`,
+      })),
+    },
+  });
 }
 
 // --- Agenda --------------------------------------------------------------------
@@ -127,7 +181,13 @@ ${[...byYear].map(([y, list]) => html`<section><h2 class="year">${y}</h2>
   })}
 </section>`)}
 </div>`;
-  return layout({ title: "L’agenda (archives)", path: "/agenda", section: "agenda", body });
+  return layout({
+    title: "L’agenda (archives)",
+    description: "Concerts hommages, spectacles, expositions et émissions autour de Charles Trenet annoncés sur le portail de 2002 à 2018.",
+    path: "/agenda",
+    section: "agenda",
+    body,
+  });
 }
 
 // --- Liens ---------------------------------------------------------------------
@@ -146,7 +206,13 @@ ${cats.map((c) => {
   <ul class="link-list">${list.map((l) => html`<li><a href="${l.url}" rel="noopener nofollow">${l.title}</a> <a class="wayback" href="https://web.archive.org/web/${year(l.added_at)}/${l.url}" rel="noopener nofollow" title="Version archivée">archive</a>${l.description ? html`<p>${l.description}</p>` : ""}</li>`)}</ul></section>`;
 })}
 </div>`;
-  return layout({ title: "Liens", path: "/liens", section: "liens", body });
+  return layout({
+    title: "Liens",
+    description: "Les sites consacrés à Charles Trenet recommandés par le portail depuis 2001, avec pour chacun sa copie archivée sur Internet Archive.",
+    path: "/liens",
+    section: "liens",
+    body,
+  });
 }
 
 // --- À propos --------------------------------------------------------------------
@@ -173,7 +239,13 @@ ${pageHeader({ kicker: "À propos", title: "Le portail des amis de Charles Trene
   </ul>
   <p>Pour suivre l’actualité de Charles Trenet aujourd’hui, rendez-vous sur <a href="https://www.facebook.com/charlestrenet" rel="noopener">la page Charles Trenet sur Facebook</a>.</p>
 </div>`;
-  return layout({ title: "À propos", path: "/a-propos", section: "a-propos", body });
+  return layout({
+    title: "À propos",
+    description: "L’histoire du portail des amis de Charles Trenet, créé en 2001 par Dominic Daussaint, et de son archive : ce qui a été conservé, restauré et fermé.",
+    path: "/a-propos",
+    section: "a-propos",
+    body,
+  });
 }
 
 // --- Recherche -------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import { articleUrl, queries, type Article, type ArticleSummary, type Comment } from "../db.ts";
-import { formatDate, formatNumber, plural, seeded, year } from "../format.ts";
+import { formatDate, formatNumber, plural, seeded, summary, year } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
 import { articleCard, articleRow, breadcrumbs, monogram, pageHeader, seriesSlug, themesById } from "./components.ts";
 import { layout, SITE_URL } from "./layout.ts";
@@ -58,7 +58,14 @@ ${pageHeader({
     </section>
   </aside>
 </div>`;
-  return layout({ title: "Tous les articles", path: sort === "recents" ? "/articles" : `/articles/${sort}`, section: "articles", body });
+  return layout({
+    title: { recents: "Tous les articles", anciens: "Tous les articles, des plus anciens aux plus récents", populaires: "Les articles les plus lus" }[sort],
+    description: `Les ${all.length} articles du portail des amis de Charles Trenet, de 2001 à 2020 : témoignages, enquêtes, souvenirs de récitals, disques, livres et films.`,
+    path: sort === "recents" ? "/articles" : `/articles/${sort}`,
+    canonical: "/articles", // same list, another order
+    section: "articles",
+    body,
+  });
 }
 
 export function renderTheme(slug: string): string | null {
@@ -106,7 +113,15 @@ export function renderAuthor(slug: string): string | null {
   const body = html`
 ${pageHeader({ crumbs: breadcrumbs([["Articles", "/articles"], [author.author]]), kicker: "Auteur", title: author.author, lede: `${plural(items.length, "article", "articles")} publiés sur le portail.` })}
 <ul class="rows">${items.map(articleRow)}</ul>`;
-  return layout({ title: author.author, path: `/auteurs/${slug}`, section: "articles", body });
+  const years = items.map((a) => year(a.published_at)).sort();
+  const span = years[0] === years.at(-1) ? `en ${years[0]}` : `de ${years[0]} à ${years.at(-1)}`;
+  return layout({
+    title: `Les articles de ${author.author}`,
+    description: summary(`${plural(items.length, "article", "articles")} de ${author.author} sur Charles Trenet, publiés ${span} sur le portail des amis du Fou chantant : ${items.slice(0, 3).map((a) => `« ${a.title} »`).join(", ")}${items.length > 3 ? "…" : "."}`, 200),
+    path: `/auteurs/${slug}`,
+    section: "articles",
+    body,
+  });
 }
 
 function commentThread(comments: Comment[]): SafeHtml {
@@ -192,6 +207,7 @@ ${related.length ? html`<section class="section"><header class="section-head"><h
       "@context": "https://schema.org",
       "@type": "Article",
       headline: a.title,
+      url: SITE_URL + articleUrl(a),
       datePublished: a.published_at,
       author: a.author ? { "@type": "Person", name: a.author } : undefined,
       image: a.cover_url ? SITE_URL + a.cover_url : undefined,

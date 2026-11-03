@@ -20,6 +20,16 @@ export function stripTags(s: string): string {
   return s.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"');
 }
 
+/** Plain-text summary of an HTML fragment, cut at a word, for meta descriptions. */
+export function summary(htmlFragment: string, max = 155): string {
+  const text = stripTags(htmlFragment.replace(/<br\s*\/?>|<\/p>/g, " "))
+    .replace(/&#39;|&#x27;/g, "’").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#\d+;/g, " ")
+    .replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  return cut.slice(0, Math.max(cut.lastIndexOf(" "), max * 0.6)).replace(/[\s,;:.!?—–-]+$/, "") + "…";
+}
+
 /** Today in Paris, for "Ce jour-là". */
 export function parisToday(now = new Date()): { day: number; month: number; date: Date } {
   const parts = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "numeric", timeZone: "Europe/Paris" }).formatToParts(now);

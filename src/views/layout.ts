@@ -1,20 +1,36 @@
 import { html, raw, type SafeHtml } from "../html.ts";
 import { assetUrl } from "../assets.ts";
 import { meta } from "../db.ts";
+import { describeImages } from "../alt.ts";
 import { CSP_META, STATIC } from "../mode.ts";
 
 export const SITE_NAME = "Charles Trenet — Le portail des amis du Fou chantant";
 export const SITE_URL = (process.env.SITE_URL ?? "https://www.charles-trenet.net").replace(/\/$/, "");
 
+/** schema.org description of the subject of the whole site. */
+export const TRENET = {
+  "@type": "Person",
+  name: "Charles Trenet",
+  alternateName: "Le Fou chantant",
+  birthDate: "1913-05-18",
+  deathDate: "2001-02-19",
+  birthPlace: { "@type": "Place", name: "Narbonne" },
+  deathPlace: { "@type": "Place", name: "Créteil" },
+  jobTitle: "Auteur-compositeur-interprète",
+  sameAs: ["https://fr.wikipedia.org/wiki/Charles_Trenet"],
+};
+
 export interface PageOptions {
   title: string;
   description?: string;
   path: string;
+  /** When several URLs show the same list (sort orders), the one to index. */
+  canonical?: string;
   body: SafeHtml;
   section?: "accueil" | "articles" | "chansons" | "chronologie" | "forum" | "agenda" | "liens" | "a-propos" | "recherche";
   image?: string | null;
   type?: "website" | "article" | "music.song";
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   noindex?: boolean;
   /** Extra class on <body>. */
   bodyClass?: string;
@@ -32,7 +48,8 @@ const NAV: [PageOptions["section"], string, string][] = [
 export const hatIcon = html`<svg class="hat" viewBox="0 0 64 40" aria-hidden="true"><path d="M14 27c1-9 4-19 18-19s17 10 18 19c-5 1.6-11 2.4-18 2.4S19 28.6 14 27Z" fill="currentColor"/><path d="M15 23.5c5 1.6 11 2.3 17 2.3s12-.7 17-2.3l.4 3.6c-5 1.6-11 2.4-17.4 2.4S19.6 28.7 14.6 27Z" class="hat-band"/><path d="M2 29.5c4 3.6 15 6.5 30 6.5s26-2.9 30-6.5c-1.4-1.9-6.3-3.6-12.4-4.6.3 1 .4 1.4.4 2.1-5 1.7-11 2.6-18 2.6s-13-.9-18-2.6c0-.7.1-1.1.4-2.1C8.3 25.9 3.4 27.6 2 29.5Z" fill="currentColor"/></svg>`;
 
 export function layout(o: PageOptions): string {
-  const url = SITE_URL + o.path;
+  const url = SITE_URL + (o.canonical ?? o.path);
+  const content = raw(describeImages(o.body.value, o.title));
   const description = o.description ?? "Archive du portail des amis de Charles Trenet : articles, toutes ses chansons et leurs paroles, sa vie de 1913 à 2001, et vingt ans de forum.";
   const image = SITE_URL + (o.image ?? meta.hero_image ?? "/assets/og.png");
   const fullTitle = o.path === "/" ? SITE_NAME : `${o.title} · Charles Trenet`;
@@ -103,7 +120,7 @@ ${o.jsonLd ? raw(`<script type="application/ld+json">${JSON.stringify(o.jsonLd).
   </div>
 </header>
 <main id="contenu">
-${o.body}
+${content}
 </main>
 <footer class="colophon">
   <div class="colophon-inner">

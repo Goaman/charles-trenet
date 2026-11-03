@@ -2,7 +2,7 @@ import { articleUrl, meta, queries, songUrl, stats, threadUrl, type Ephemeris } 
 import { formatDate, formatDayMonth, formatNumber, parisToday, seeded } from "../format.ts";
 import { html, raw } from "../html.ts";
 import { articleCard, seriesSlug } from "./components.ts";
-import { layout, SITE_URL } from "./layout.ts";
+import { layout, SITE_URL, TRENET } from "./layout.ts";
 
 const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
@@ -141,7 +141,7 @@ export function renderHome(now = new Date()): string {
       url: `${SITE_URL}/`,
       inLanguage: "fr",
       potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/recherche?q={q}`, "query-input": "required name=q" },
-      about: { "@type": "Person", name: "Charles Trenet", birthDate: "1913-05-18", deathDate: "2001-02-19", birthPlace: "Narbonne" },
+      about: TRENET,
     },
   });
 }

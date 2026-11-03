@@ -21,6 +21,11 @@ describe("cleanHtml", () => {
     expect(out).not.toMatch(/style=|onmouseover|onerror/);
     expect(out).toContain('class="float-right"');
   });
+  test("a stray </ before a tag does not hide it from cleaning", () => {
+    const out = cleanHtml('Texte <br></<img src="http://www.charles-trenet.net/dominic/45t.jpg" hspace="5" align="center"> fin', opts);
+    expect(out).toContain('<img src="/media/45t.jpg"');
+    expect(out).not.toMatch(/&lt;\/|hspace|charles-trenet\.net/);
+  });
   test("javascript: links are removed", () => {
     expect(cleanHtml('<a href="javascript:alert(1)">x</a>', { ...opts, resolveLink: () => null })).toBe("<p>x</p>");
   });
