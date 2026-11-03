@@ -16,7 +16,8 @@ import { resolveLegacyUrl, type LegacyLookup } from "../../src/legacy.ts";
 import { bbcodeToHtml } from "./bbcode.ts";
 import { cleanHtml, decodeSafeEntities, finalize, type CleanOptions } from "./clean-html.ts";
 import { isDead, removeDeadLinks } from "./dead-links.ts";
-import { applyAdditions, CONTENT_MEDIA } from "./additions.ts";
+import { agendaAdditions, applyAdditions, CONTENT_MEDIA } from "./additions.ts";
+import { applyCatalog } from "./catalogs.ts";
 import { MediaLibrary } from "./media.ts";
 import { loadDump, type Row } from "./mysql-dump.ts";
 import { listLegacyTexts, parseCatalogue, splitLyrics } from "./songs.ts";
@@ -380,7 +381,7 @@ for (const s of stories) {
   currentMentions = null;
   let { author, html } = extractByline(intro);
   intro = html;
-  body = applyAdditions(id, body); // new entries (discography, bibliographies)
+  body = applyCatalog(id, applyAdditions(id, body)); // new entries; discography and bibliographies as cards
   if (!author) {
     const b = extractByline(body);
     if (b.author) [author, body] = [b.author, b.html];
@@ -500,7 +501,7 @@ const agendaOut = rows("sil_agenda").map((a) => ({
   event_date: unixToIso(a.date),
   body_html: removeDeadLinks(repairHtml(redactEmails(clean(str(a.presentation))))),
   url: /^https?:\/\//i.test(str(a.url)) && !isDead(str(a.url).trim()) ? str(a.url).trim() : null,
-}));
+})).concat(agendaAdditions());
 const ephemOut = rows("nuke_ephem")
   .map((e) => ({
     id: int(e.pn_eid), day: int(e.pn_did), month: int(e.pn_mid), year: int(e.pn_yid) || null,

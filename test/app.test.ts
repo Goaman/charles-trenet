@@ -136,11 +136,27 @@ describe("SEO", () => {
     for (const v of [13, 14, 15, 16]) expect(disco).toContain(`Intégrale vol. ${v} –`);
     expect(disco.indexOf("Intégrale vol. 16")).toBeLessThan(disco.indexOf("Anthologie I"));
     const autour = await (await get("/articles/40-bibliographie-autour-de-charles-trenet")).text();
-    for (const t of ["LA VIE QUI VA", "LA RÉVOLUTION TRENET", "QUE RESTE-T-IL DU FOU CHANTANT"]) expect(autour).toContain(t);
+    for (const t of ["La vie qui va", "La révolution Trenet", "que reste-t-il du fou chantant"]) expect(autour).toContain(t);
     const oeuvres = await (await get("/articles/17-bibliographie-de-ses-oeuvres")).text();
-    expect(oeuvres.indexOf("LES ROIS FAINÉANTS")).toBeGreaterThan(0);
-    expect(oeuvres.indexOf("LES ROIS FAINÉANTS")).toBeLessThan(oeuvres.indexOf("QUELQUES RECUEILS"));
+    expect(oeuvres.indexOf("Les Rois fainéants</h3>")).toBeGreaterThan(0);
+    expect(oeuvres.indexOf("Les Rois fainéants</h3>")).toBeLessThan(oeuvres.indexOf("Quelques recueils"));
+    expect(oeuvres).toContain("Vincent Lisita</strong>");
     for (const img of ["integrale-vol-16.jpg", "rois-faineants.jpg"]) expect((await get(`/media/${img}`)).status).toBe(200);
+  });
+  test("discography and bibliographies: one card per entry, no underlined passages", async () => {
+    const pages = { "/articles/34-sa-discographie-disponible": 33, "/articles/40-bibliographie-autour-de-charles-trenet": 36, "/articles/17-bibliographie-de-ses-oeuvres": 12 };
+    for (const [path, n] of Object.entries(pages)) {
+      const body = await (await get(path)).text();
+      expect(body.match(/<section class="fiche">/g)?.length).toBe(n);
+      expect(body.match(/<h3 class="fiche-title">/g)?.length).toBe(n);
+      if (!path.includes("17-")) expect(body).not.toMatch(/<u>|4ème de couverture|CD 1/);
+    }
+  });
+  test("agenda: Nelson Monfort in Brussels, 29 November 2026", async () => {
+    const body = await (await get("/agenda")).text();
+    expect(body).toContain("Nelson Monfort raconte et chante Charles Trenet");
+    expect(body).toContain("ya-d-la-joie-nelson-monfort.jpg");
+    expect((await get("/media/ya-d-la-joie-nelson-monfort.jpg")).status).toBe(200);
   });
   test("no 'archive' outside the forum", async () => {
     for (const path of ["/", "/articles", "/a-propos", "/liens", "/agenda", "/textes"]) {

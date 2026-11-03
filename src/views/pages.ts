@@ -173,10 +173,12 @@ ${pageHeader({ kicker: "Agenda", title: "L’agenda", lede: "Concerts, spectacle
 ${[...byYear].map(([y, list]) => html`<section><h2 class="year">${y}</h2>
   ${list.map((it) => {
     const [where, ...what] = it.title.split(/\s+-\s+/);
-    return html`<article class="event" id="evenement-${it.id}">
-    <p class="event-date">${formatMonth(it.event_date)}</p>
-    <div><h3>${what.length ? what.join(" — ") : it.title}</h3>${what.length ? html`<p class="event-where">${where}</p>` : ""}
-    <details><summary>Lire l’annonce</summary><div class="prose prose-sm">${raw(it.body_html)}</div>${it.url ? html`<p><a href="${it.url}" rel="noopener nofollow">${it.url.replace(/^https?:\/\//, "").slice(0, 60)}</a></p>` : ""}</details></div>
+    // Still to come (when the page was built): shown open, with its full date
+    const soon = new Date(it.event_date).getTime() > Date.now();
+    return html`<article class="event${soon ? " event-soon" : ""}" id="evenement-${it.id}">
+    <p class="event-date">${soon ? formatDate(it.event_date) : formatMonth(it.event_date)}</p>
+    <div><h3>${what.length ? what.join(" — ") : it.title}${soon ? html` <span class="soon-badge">À venir</span>` : ""}</h3>${what.length ? html`<p class="event-where">${where}</p>` : ""}
+    <details${soon ? raw(" open") : ""}><summary>Lire l’annonce</summary><div class="prose prose-sm">${raw(it.body_html)}</div>${it.url ? html`<p><a href="${it.url}" rel="noopener nofollow">${it.url.replace(/^https?:\/\//, "").slice(0, 60)}</a></p>` : ""}</details></div>
   </article>`;
   })}
 </section>`)}

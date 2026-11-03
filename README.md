@@ -123,11 +123,15 @@ The output is deterministic (same input → same database).
 
 ### New content
 
-Entries added since the old site (Intégrale volumes 13–16, recent books, *Les
-Rois fainéants*) are in `scripts/migrate/additions.ts`: each one is inserted into
-an article, before a given piece of its HTML or at its end, and its images live
-in `content/media/` (copied to `public/media/` by the migration). Add an entry
-there, then `bun run migrate`.
+The discography and the two bibliographies are catalogues, one card per disc or
+book (cover, title, references), written in `scripts/migrate/catalogs.ts`; the
+long underlined passages of the old pages (track lists, back-cover blurbs) were
+left out at the webmaster's request. To add a disc or a book, add a card there.
+
+Other additions (*Les Rois fainéants*, agenda events) are in
+`scripts/migrate/additions.ts`. Their images live in `content/media/` (copied to
+`public/media/` by the migration). Then `bun run migrate`. An agenda event still
+to come is shown open, with an « À venir » badge (as of the build).
 
 ### Dead links
 
