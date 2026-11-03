@@ -82,7 +82,7 @@ export const AGENDA_ADDITIONS: AgendaAddition[] = [
 <p>${cover("ya-d-la-joie-nelson-monfort.jpg", "float-right")}<strong>Y’A D’LA JOIE !</strong><br>Nelson Monfort raconte et chante Charles Trenet<br>Nicolas Dewaelheyns présente</p>
 <p>Le plus célèbre des journalistes sportifs dans son seul-en-scène « Y’a d’la joie ! » : un voyage culturel, passionné et truffé d’anecdotes savoureuses sur la vie, la carrière exceptionnelle et les plus grandes chansons du Fou chantant. Un hommage vibrant porté par la verve et l’élégance inimitables de Nelson Monfort, auteur du <a href="/articles/40-bibliographie-autour-de-charles-trenet"><em>Roman de Charles Trenet</em></a> (Éditions du Rocher, 2013).</p>
 <p>Places limitées : réservez dès maintenant pour ne pas manquer cette date exclusive !</p>
-<p><strong>Théâtre Vita, sous la basilique de Koekelberg – Bruxelles<br>Réservations : <a href="https://www.resevents.be/" rel="noopener nofollow">www.resevents.be</a></strong></p>`,
+<p><strong>Théâtre Vita, sous la basilique de Koekelberg – Bruxelles<br>Réservations en ligne : <a href="https://sales.resevents.be/event/56803/y-a-d-la-joie-nelson-monfort-raconte-et-chante-charles-trenet" rel="noopener nofollow">resevents.be</a></strong></p>`,
   },
 ];
 
