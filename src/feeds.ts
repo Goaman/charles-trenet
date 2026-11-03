@@ -1,13 +1,13 @@
 import { articleUrl, queries, songUrl, textUrl, threadUrl } from "./db.ts";
 import { escape } from "./html.ts";
-import { SITE_URL } from "./views/layout.ts";
+import { SITE_NAME, SITE_URL } from "./views/layout.ts";
 
 export function rss(): string {
   const items = queries.articles.all(30, 0);
   return `<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-<title>Charles Trenet — le portail des amis du Fou chantant</title>
+<title>${SITE_NAME}</title>
 <link>${SITE_URL}/</link>
 <atom:link href="${SITE_URL}/flux.xml" rel="self" type="application/rss+xml"/>
 <description>Les articles du portail des amis de Charles Trenet.</description>
@@ -18,7 +18,6 @@ ${items
 <title>${escape(a.title)}</title>
 <link>${SITE_URL}${articleUrl(a)}</link>
 <guid isPermaLink="true">${SITE_URL}${articleUrl(a)}</guid>
-<pubDate>${new Date(a.published_at).toUTCString()}</pubDate>
 ${a.author ? `<author>noreply@charles-trenet.net (${escape(a.author)})</author>` : ""}
 <description>${escape(a.excerpt)}</description>
 </item>`,

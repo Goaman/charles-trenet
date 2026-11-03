@@ -15,6 +15,7 @@ import { parseArgs } from "node:util";
 import { resolveLegacyUrl, type LegacyLookup } from "../../src/legacy.ts";
 import { bbcodeToHtml } from "./bbcode.ts";
 import { cleanHtml, decodeSafeEntities, finalize, type CleanOptions } from "./clean-html.ts";
+import { isDead, removeDeadLinks } from "./dead-links.ts";
 import { MediaLibrary } from "./media.ts";
 import { loadDump, type Row } from "./mysql-dump.ts";
 import { listLegacyTexts, parseCatalogue, splitLyrics } from "./songs.ts";
@@ -84,7 +85,7 @@ const repairText = (t: string) => repairQuestionMarks(t, vocab);
 // ---------------------------------------------------------------------------
 const THEMES: Record<number, { slug: string; position: number; description: string }> = {
   32: { slug: "chanson", position: 1, description: "Ses disques, ses récitals, ses musiciens, ses grands moments sur scène : le chanteur, de l’ABC au Palais des Congrès." },
-  33: { slug: "l-homme", position: 2, description: "Enfance, famille, amitiés, procès et zones d’ombre : l’homme derrière le Fou Chantant." },
+  33: { slug: "l-homme", position: 2, description: "Enfance, famille, amitiés, procès et zones d’ombre : l’homme derrière l’artiste." },
   2: { slug: "litterature", position: 3, description: "Romans, poèmes et écrits : Trenet l’écrivain, ses lectures et ses maîtres." },
   31: { slug: "cinema", position: 4, description: "De « La Route enchantée » à « Printemps à Paris » : ses films et sa filmographie." },
   30: { slug: "peinture", position: 5, description: "Le violon d’Ingres d’un poète qui peignait aussi." },
@@ -373,8 +374,8 @@ for (const s of stories) {
   const meta = articleMeta.get(id)!;
   const mentions = new Set<string>();
   currentMentions = mentions;
-  let intro = repairHtml(clean(str(s.pn_hometext)));
-  let body = repairHtml(clean(str(s.pn_bodytext)));
+  let intro = removeDeadLinks(repairHtml(clean(str(s.pn_hometext))));
+  let body = removeDeadLinks(repairHtml(clean(str(s.pn_bodytext))));
   currentMentions = null;
   let { author, html } = extractByline(intro);
   intro = html;
@@ -407,7 +408,7 @@ for (const s of stories) {
 for (const c of commentRows) {
   const articleId = int(c.pn_sid);
   if (!articleMeta.has(articleId)) continue;
-  const body = repairHtml(redactEmails(clean(str(c.pn_comment).replace(/\n/g, "<br>"))));
+  const body = removeDeadLinks(repairHtml(redactEmails(clean(str(c.pn_comment).replace(/\n/g, "<br>")))));
   if (!stripTags(body)) continue;
   let subject = collapseWs(repairText(decodeEntities(str(c.pn_subject))));
   if (/^re\s*:/i.test(subject) || !subject) subject = "";
@@ -445,15 +446,18 @@ const authorName = (a: string | null | undefined) => collapseWs(decodeEntities(s
 let postId = 0;
 for (const t of threadRows) {
   const tid = int(t.tid);
+  // Messages left empty (only a video that has since disappeared) are dropped
   const posts = [
-    { author: t.author, dateline: t.dateline, message: t.message, pid: "0" },
+    { author: t.author, dateline: t.dateline, message: t.message, pid: "0" } as Row,
     ...(forumPosts.get(tid) ?? []).sort((a, b) => int(a.dateline) - int(b.dateline) || int(a.pid) - int(b.pid)),
-  ].filter((p) => stripSlashes(str(p.message)).trim());
+  ]
+    .map((p) => ({ author: p.author, dateline: p.dateline, body: removeDeadLinks(repairHtml(decodeSafeEntities(bbcodeToHtml(repairLegacyChars(str(p.message)), bbOpts)))) }))
+    .filter((p) => stripTags(p.body).trim() || /<(img|figure)\b/.test(p.body));
   if (!posts.length) continue;
   posts.forEach((p, i) => {
     postOut.push({
       id: ++postId, thread_id: tid, position: i + 1, author: authorName(p.author),
-      posted_at: unixToIso(p.dateline), body_html: repairHtml(decodeSafeEntities(bbcodeToHtml(repairLegacyChars(str(p.message)), bbOpts))),
+      posted_at: unixToIso(p.dateline), body_html: p.body,
     });
   });
   const url = threadUrl.get(tid)!;
@@ -492,8 +496,8 @@ const agendaOut = rows("sil_agenda").map((a) => ({
   // Titles are too short to show damage on their own: use the whole row as evidence.
   title: collapseWs(repairQuestionMarks(decodeEntities(str(a.titre)), vocab, looksAccentDamaged(str(a.titre) + str(a.presentation)))),
   event_date: unixToIso(a.date),
-  body_html: repairHtml(redactEmails(clean(str(a.presentation)))),
-  url: /^https?:\/\//i.test(str(a.url)) ? str(a.url).trim() : null,
+  body_html: removeDeadLinks(repairHtml(redactEmails(clean(str(a.presentation))))),
+  url: /^https?:\/\//i.test(str(a.url)) && !isDead(str(a.url).trim()) ? str(a.url).trim() : null,
 }));
 const ephemOut = rows("nuke_ephem")
   .map((e) => ({
@@ -507,7 +511,8 @@ const linkCats = rows("nuke_links_categories").map((c) => ({
   description: collapseWs(repairText(stripTags(str(c.pn_description)))),
 }));
 const linksOut = rows("nuke_links_links")
-  .filter((l) => /^https?:\/\//i.test(str(l.pn_url).trim()))
+  // Only the sites that still answer (see dead-links.ts)
+  .filter((l) => /^https?:\/\//i.test(str(l.pn_url).trim()) && !isDead(str(l.pn_url).trim()))
   .map((l) => ({
     id: int(l.pn_lid), category_id: int(l.pn_cat_id),
     title: collapseWs(repairText(decodeEntities(str(l.pn_title)))), url: str(l.pn_url).trim(),
@@ -523,7 +528,7 @@ const faq = (id: number) => rows("nuke_faqanswer").find((f) => int(f.pn_id) === 
 const whyHtml = repairHtml(clean(str(faq(1)?.pn_answer).split(/Un petit clic/i)[0]!)).replace(/\s*\(voir menu de gauche\)/, "");
 const criticHtml = repairHtml(clean(str(faq(2)?.pn_answer)));
 const pagesOut = [
-  { slug: "accueil", title: "Charles Trenet, le Fou Chantant", body_html: introHtml },
+  { slug: "accueil", title: "Le portail des amis de Charles Trenet", body_html: introHtml },
   { slug: "pourquoi", title: "Pourquoi ce portail ?", body_html: whyHtml },
   { slug: "critique", title: "Et si Charles Trenet vous déplaît ?", body_html: criticHtml },
 ];
@@ -588,7 +593,8 @@ const idx = db.prepare("INSERT INTO search (kind, url, title, body, meta) VALUES
 db.transaction(() => {
   for (const a of out.articles) {
     const meta = articleMeta.get(a.id as number)!;
-    idx.run("article", meta.url, String(a.title), stripTags(`${a.intro_html}\n${a.body_html}`), String(a.published_at).slice(0, 4));
+    // No year next to the articles in the results: they must look current
+    idx.run("article", meta.url, String(a.title), stripTags(`${a.intro_html}\n${a.body_html}`), "");
   }
   const songByText = new Map<number, Record<string, unknown>>();
   for (const s of out.songs) if (s.text_id && !songByText.has(s.text_id as number)) songByText.set(s.text_id as number, s);

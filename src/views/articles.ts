@@ -17,15 +17,11 @@ export function renderArticleIndex(sort: Sort): string {
   let list: SafeHtml;
   if (sort === "populaires") {
     const ranked = [...all].sort((a, b) => b.legacy_views - a.legacy_views);
-    list = html`<ol class="rows rows-ranked">${ranked.map((a) => html`<li class="row"><span class="row-date">${formatNumber(a.legacy_views)} lectures</span><div class="row-main"><a class="row-title" href="${articleUrl(a)}">${a.title}</a><span class="row-meta">${a.author ? `${a.author} · ` : ""}${formatDate(a.published_at)}</span></div><span class="row-aside">${a.reading_minutes}&nbsp;min</span></li>`)}</ol>`;
+    list = html`<ol class="rows rows-ranked">${ranked.map((a) => html`<li class="row"><span class="row-date">${formatNumber(a.legacy_views)} lectures</span><div class="row-main"><a class="row-title" href="${articleUrl(a)}">${a.title}</a><span class="row-meta">${a.author ?? ""}</span></div><span class="row-aside">${a.reading_minutes}&nbsp;min</span></li>`)}</ol>`;
   } else {
+    // No years: the articles are shown without their publication date
     const ordered = sort === "anciens" ? [...all].reverse() : all;
-    const byYear = new Map<string, ArticleSummary[]>();
-    for (const a of ordered) {
-      const y = year(a.published_at);
-      byYear.set(y, [...(byYear.get(y) ?? []), a]);
-    }
-    list = html`${[...byYear].map(([y, items]) => html`<section class="year-group" id="annee-${y}"><h2 class="year">${y}<span>${plural(items.length, "article", "articles")}</span></h2><ul class="rows">${items.map(articleRow)}</ul></section>`)}`;
+    list = html`<ul class="rows">${ordered.map(articleRow)}</ul>`;
   }
   const sortLink = (s: Sort, label: string) =>
     html`<a href="${s === "recents" ? "/articles" : `/articles/${s}`}"${s === sort ? raw(' aria-current="true"') : ""}>${label}</a>`;
@@ -34,12 +30,12 @@ export function renderArticleIndex(sort: Sort): string {
 ${pageHeader({
   kicker: "Le magazine",
   title: "Tous les articles",
-  lede: html`${all.length} articles publiés de 2001 à 2020 par les amis de Charles Trenet : témoignages, enquêtes, souvenirs de récitals, coups de chapeau et coups de venin.`,
+  lede: html`${all.length} articles écrits par les amis de Charles Trenet : témoignages, enquêtes, souvenirs de récitals, coups de chapeau et coups de venin.`,
 })}
 <div class="with-sidebar">
   <div>
     <div class="toolbar">
-      <nav class="segmented" aria-label="Trier">${sortLink("recents", "Plus récents")}${sortLink("anciens", "Plus anciens")}${sortLink("populaires", "Plus lus")}</nav>
+      <nav class="segmented" aria-label="Trier">${sortLink("recents", "Les derniers")}${sortLink("anciens", "Depuis le début")}${sortLink("populaires", "Les plus lus")}</nav>
     </div>
     ${list}
   </div>
@@ -59,8 +55,8 @@ ${pageHeader({
   </aside>
 </div>`;
   return layout({
-    title: { recents: "Tous les articles", anciens: "Tous les articles, des plus anciens aux plus récents", populaires: "Les articles les plus lus" }[sort],
-    description: `Les ${all.length} articles du portail des amis de Charles Trenet, de 2001 à 2020 : témoignages, enquêtes, souvenirs de récitals, disques, livres et films.`,
+    title: { recents: "Tous les articles", anciens: "Tous les articles, depuis le début", populaires: "Les articles les plus lus" }[sort],
+    description: `Les ${all.length} articles du portail des amis de Charles Trenet : témoignages, enquêtes, souvenirs de récitals, disques, livres et films.`,
     path: sort === "recents" ? "/articles" : `/articles/${sort}`,
     canonical: "/articles", // same list, another order
     section: "articles",
@@ -99,7 +95,7 @@ ${pageHeader({ crumbs: breadcrumbs([["Articles", "/articles"], [s.name]]), kicke
 <ol class="episodes">
   ${items.map((a) => html`<li><a href="${articleUrl(a)}">
     <span class="episode-num">${a.series_part ?? "◆"}</span>
-    <span class="episode-body"><span class="episode-title">${a.title}</span><span class="episode-excerpt">${a.excerpt}</span><span class="byline">${a.author ? `${a.author} · ` : ""}${formatDate(a.published_at)} · ${a.reading_minutes}&nbsp;min</span></span>
+    <span class="episode-body"><span class="episode-title">${a.title}</span><span class="episode-excerpt">${a.excerpt}</span><span class="byline">${a.author ? `${a.author} · ` : ""}${a.reading_minutes}&nbsp;min de lecture</span></span>
     ${a.cover_url ? html`<img src="${a.cover_url}" alt="" width="${a.cover_width}" height="${a.cover_height}" loading="lazy">` : ""}
   </a></li>`)}
 </ol>`;
@@ -113,11 +109,9 @@ export function renderAuthor(slug: string): string | null {
   const body = html`
 ${pageHeader({ crumbs: breadcrumbs([["Articles", "/articles"], [author.author]]), kicker: "Auteur", title: author.author, lede: `${plural(items.length, "article", "articles")} publiés sur le portail.` })}
 <ul class="rows">${items.map(articleRow)}</ul>`;
-  const years = items.map((a) => year(a.published_at)).sort();
-  const span = years[0] === years.at(-1) ? `en ${years[0]}` : `de ${years[0]} à ${years.at(-1)}`;
   return layout({
     title: `Les articles de ${author.author}`,
-    description: summary(`${plural(items.length, "article", "articles")} de ${author.author} sur Charles Trenet, publiés ${span} sur le portail des amis du Fou chantant : ${items.slice(0, 3).map((a) => `« ${a.title} »`).join(", ")}${items.length > 3 ? "…" : "."}`, 200),
+    description: summary(`${plural(items.length, "article", "articles")} de ${author.author} sur Charles Trenet, publiés sur le portail des amis de Charles Trenet : ${items.slice(0, 3).map((a) => `« ${a.title} »`).join(", ")}${items.length > 3 ? "…" : "."}`, 200),
     path: `/auteurs/${slug}`,
     section: "articles",
     body,
@@ -126,7 +120,7 @@ ${pageHeader({ crumbs: breadcrumbs([["Articles", "/articles"], [author.author]])
 
 function commentThread(comments: Comment[]): SafeHtml {
   return html`<ol class="comments">${comments.map((c) => html`<li class="comment" id="commentaire-${c.id}">
-    <header>${monogram(c.author)}<span class="comment-author">${c.author}</span><time datetime="${c.posted_at}">${formatDate(c.posted_at)}</time></header>
+    <header>${monogram(c.author)}<span class="comment-author">${c.author}</span></header>
     ${c.subject ? html`<p class="comment-subject">${c.subject}</p>` : ""}
     <div class="prose prose-sm">${raw(c.body_html)}</div>
   </li>`)}</ol>`;
@@ -160,9 +154,8 @@ export function renderArticle(a: Article): string {
     <h1>${a.title}</h1>
     <p class="byline">
       ${a.author ? html`<span class="by">par <a href="/auteurs/${authorSlug(a.author)}">${a.author}</a></span>` : ""}
-      <time datetime="${a.published_at}">${formatDate(a.published_at)}</time>
       <span>${a.reading_minutes}&nbsp;min de lecture</span>
-      ${a.legacy_views ? html`<span title="Sur l’ancien site">${formatNumber(a.legacy_views)} lectures</span>` : ""}
+      ${a.legacy_views ? html`<span>${formatNumber(a.legacy_views)} lectures</span>` : ""}
     </p>
   </header>
   <div class="article-body prose" data-lightbox>
@@ -182,7 +175,7 @@ export function renderArticle(a: Article): string {
 ${comments.length
   ? html`<section class="comments-section" id="commentaires">
   <details>
-    <summary><h2>${plural(comments.length, "commentaire", "commentaires")} de lecteurs</h2><span class="muted">archive, ${year(comments[0]!.posted_at)}${year(comments.at(-1)!.posted_at) !== year(comments[0]!.posted_at) ? `–${year(comments.at(-1)!.posted_at)}` : ""}</span></summary>
+    <summary><h2>${plural(comments.length, "commentaire", "commentaires")} de lecteurs</h2></summary>
     ${commentThread(comments)}
   </details>
 </section>`
@@ -208,7 +201,6 @@ ${related.length ? html`<section class="section"><header class="section-head"><h
       "@type": "Article",
       headline: a.title,
       url: SITE_URL + articleUrl(a),
-      datePublished: a.published_at,
       author: a.author ? { "@type": "Person", name: a.author } : undefined,
       image: a.cover_url ? SITE_URL + a.cover_url : undefined,
       inLanguage: "fr",

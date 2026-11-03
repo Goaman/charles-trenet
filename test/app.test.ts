@@ -120,7 +120,23 @@ describe("SEO", () => {
   test("sort orders point to one canonical list", async () => {
     const body = await (await get("/articles/populaires")).text();
     expect(body).toContain('<link rel="canonical" href="https://www.charles-trenet.net/articles">');
-    expect(body).toContain("<title>Les articles les plus lus · Charles Trenet</title>");
+    expect(body).toContain("<title>Les articles les plus lus · Le portail des amis de Charles Trenet</title>");
+  });
+  test("articles show no publication date", async () => {
+    const a = db.query<{ id: number; slug: string; published_at: string }, []>("SELECT id, slug, published_at FROM articles ORDER BY id LIMIT 1").get()!;
+    for (const path of [`/articles/${a.id}-${a.slug}`, "/articles", "/", "/series/les-grands-moments"]) {
+      const body = await (await get(path)).text();
+      const main = body.slice(body.indexOf("<main"), body.indexOf("</main>"));
+      expect(path === "/" ? main.slice(0, main.indexOf("section-forum")) : main).not.toMatch(/<time\b|class="year"/);
+      expect(body).not.toContain(`"datePublished":"${a.published_at}"`);
+    }
+  });
+  test("no 'archive' outside the forum", async () => {
+    for (const path of ["/", "/articles", "/a-propos", "/liens", "/agenda", "/textes"]) {
+      // The content may speak of archives ("les archives de l’INA"): only the site’s own words count
+      const body = (await (await get(path)).text()).replace(/archives du forum/gi, "").replace(/<details>[\s\S]*?<\/details>/g, "");
+      expect(body).not.toMatch(/archiv/i);
+    }
   });
   test("forum threads: distinct titles and DiscussionForumPosting", async () => {
     const titles = await Promise.all([2, 3].map(async (id) => {

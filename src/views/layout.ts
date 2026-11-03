@@ -4,7 +4,9 @@ import { meta } from "../db.ts";
 import { describeImages } from "../alt.ts";
 import { CSP_META, STATIC } from "../mode.ts";
 
-export const SITE_NAME = "Charles Trenet — Le portail des amis du Fou chantant";
+export const SITE_NAME = "Le portail des amis de Charles Trenet";
+/** The official Facebook page, which took over from the forum. */
+export const FACEBOOK_URL = "https://www.facebook.com/charlestrenet";
 export const SITE_URL = (process.env.SITE_URL ?? "https://www.charles-trenet.net").replace(/\/$/, "");
 
 /** schema.org description of the subject of the whole site. */
@@ -45,14 +47,15 @@ const NAV: [PageOptions["section"], string, string][] = [
   ["a-propos", "/a-propos", "À propos"],
 ];
 
-export const hatIcon = html`<svg class="hat" viewBox="0 0 64 40" aria-hidden="true"><path d="M14 27c1-9 4-19 18-19s17 10 18 19c-5 1.6-11 2.4-18 2.4S19 28.6 14 27Z" fill="currentColor"/><path d="M15 23.5c5 1.6 11 2.3 17 2.3s12-.7 17-2.3l.4 3.6c-5 1.6-11 2.4-17.4 2.4S19.6 28.7 14.6 27Z" class="hat-band"/><path d="M2 29.5c4 3.6 15 6.5 30 6.5s26-2.9 30-6.5c-1.4-1.9-6.3-3.6-12.4-4.6.3 1 .4 1.4.4 2.1-5 1.7-11 2.6-18 2.6s-13-.9-18-2.6c0-.7.1-1.1.4-2.1C8.3 25.9 3.4 27.6 2 29.5Z" fill="currentColor"/></svg>`;
+/** The logo (it replaced the little hat): Charles Trenet, thumbs up. */
+const logo = (cls: string) => html`<img class="${cls}" src="${assetUrl("charles-trenet.jpg")}" alt="" width="212" height="156">`;
 
 export function layout(o: PageOptions): string {
   const url = SITE_URL + (o.canonical ?? o.path);
   const content = raw(describeImages(o.body.value, o.title));
-  const description = o.description ?? "Archive du portail des amis de Charles Trenet : articles, toutes ses chansons et leurs paroles, sa vie de 1913 à 2001, et vingt ans de forum.";
+  const description = o.description ?? "Le portail des amis de Charles Trenet : articles, toutes ses chansons et leurs paroles, sa vie de 1913 à 2001, et la mémoire du forum des trenetophiles.";
   const image = SITE_URL + (o.image ?? meta.hero_image ?? "/assets/og.png");
-  const fullTitle = o.path === "/" ? SITE_NAME : `${o.title} · Charles Trenet`;
+  const fullTitle = o.path === "/" ? SITE_NAME : `${o.title} · ${SITE_NAME}`;
   return (
     "<!doctype html>\n" +
     html`<html lang="fr" data-theme="auto"${STATIC ? raw(" data-static") : ""}>
@@ -67,7 +70,7 @@ ${o.noindex ? html`<meta name="robots" content="noindex">` : ""}
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f4ede0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14161d" media="(prefers-color-scheme: dark)">
-<meta property="og:site_name" content="Charles Trenet">
+<meta property="og:site_name" content="${SITE_NAME}">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:type" content="${o.type ?? "website"}">
 <meta property="og:title" content="${o.title}">
@@ -75,8 +78,9 @@ ${o.noindex ? html`<meta name="robots" content="noindex">` : ""}
 <meta property="og:url" content="${url}">
 <meta property="og:image" content="${image}">
 <meta name="twitter:card" content="summary">
-<link rel="icon" href="${assetUrl("favicon.svg")}" type="image/svg+xml">
-<link rel="alternate" type="application/rss+xml" title="Charles Trenet — articles" href="/flux.xml">
+<link rel="icon" href="${assetUrl("favicon.png")}" type="image/png">
+<link rel="apple-touch-icon" href="${assetUrl("apple-touch-icon.png")}">
+<link rel="alternate" type="application/rss+xml" title="${SITE_NAME} — articles" href="/flux.xml">
 <link rel="search" type="application/opensearchdescription+xml" title="Charles Trenet" href="/opensearch.xml">
 <link rel="preload" href="${assetUrl("fonts/fraunces.woff2")}" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${assetUrl("fonts/source-serif-4.woff2")}" as="font" type="font/woff2" crossorigin>
@@ -88,11 +92,18 @@ ${o.jsonLd ? raw(`<script type="application/ld+json">${JSON.stringify(o.jsonLd).
 </head>
 <body class="${o.bodyClass ?? ""}">
 <a class="skip" href="#contenu">Aller au contenu</a>
+<div class="banner">
+  <a href="/" aria-label="Accueil — ${SITE_NAME}">
+    <picture>
+      <source media="(max-width: 700px)" srcset="${assetUrl("banniere-etroite.png")}" width="675" height="81">
+      <img src="${assetUrl("banniere.png")}" alt="${SITE_NAME}" width="991" height="81">
+    </picture>
+  </a>
+</div>
 <header class="masthead">
   <div class="masthead-inner">
-    <a class="brand" href="/" aria-label="Accueil — Charles Trenet">
-      ${hatIcon}
-      <span class="brand-text"><span class="brand-name">Charles Trenet</span><span class="brand-sub">le portail des amis du Fou chantant</span></span>
+    <a class="brand" href="/" aria-label="Accueil — ${SITE_NAME}">
+      ${logo("brand-logo")}
     </a>
     <nav class="nav" aria-label="Navigation principale">
       <ul>
@@ -125,9 +136,9 @@ ${content}
 <footer class="colophon">
   <div class="colophon-inner">
     <div class="colophon-brand">
-      ${hatIcon}
-      <p><strong>charles-trenet.net</strong><br>Le portail des amis de Charles Trenet, créé en 2001 par Dominic Daussaint et nourri pendant vingt ans par ses lecteurs.</p>
-      <p class="archive-note">Ce site est désormais une <a href="/a-propos#archive">archive en lecture seule</a>&nbsp;: les inscriptions, le forum et les commentaires sont fermés.</p>
+      ${logo("colophon-logo")}
+      <p><strong>Le portail des amis de Charles Trenet</strong><br>Créé en 2001 par Dominic Daussaint, nourri depuis par ses lecteurs et régulièrement enrichi.</p>
+      <p class="colophon-note">L’actualité de Charles Trenet et les échanges entre ses admirateurs se poursuivent sur <a href="${FACEBOOK_URL}" rel="noopener">la page Facebook officielle</a>.</p>
     </div>
     <nav aria-label="Plan du site">
       <h2>Explorer</h2>
@@ -139,10 +150,10 @@ ${content}
         <li><a href="/chronologie">Sa vie, de 1913 à 2001</a></li>
       </ul>
     </nav>
-    <nav aria-label="Archives">
-      <h2>Archives</h2>
+    <nav aria-label="Et aussi">
+      <h2>Et aussi</h2>
       <ul>
-        <li><a href="/forum">Le forum (2002–2021)</a></li>
+        <li><a href="/forum">Les archives du forum</a></li>
         <li><a href="/agenda">L’agenda</a></li>
         <li><a href="/liens">Liens</a></li>
         <li><a href="/hasard" rel="nofollow">Une chanson au hasard</a></li>

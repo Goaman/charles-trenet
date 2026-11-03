@@ -105,7 +105,7 @@ function lyricsBlock(t: Text): SafeHtml {
 function mentions(textId: number): SafeHtml {
   const arts = queries.articlesMentioning.all(textId);
   if (!arts.length) return html``;
-  return html`<section class="box"><h2>Évoquée dans</h2><ul class="plain">${arts.map((a) => html`<li><a href="${articleUrl(a)}">${a.title}</a> <span class="muted">${formatDate(a.published_at)}</span></li>`)}</ul></section>`;
+  return html`<section class="box"><h2>Évoquée dans</h2><ul class="plain">${arts.map((a) => html`<li><a href="${articleUrl(a)}">${a.title}</a></li>`)}</ul></section>`;
 }
 
 export function renderSong(s: Song): string {
@@ -132,7 +132,7 @@ export function renderSong(s: Song): string {
     <dl class="facts">${facts.map(([k, v]) => html`<div><dt>${k}</dt><dd>${v}</dd></div>`)}</dl>
     <p>${songBadges(s)}</p>
   </header>
-  ${text ? lyricsBlock(text) : html`<p class="no-lyrics">Les paroles de cette chanson ne figurent pas dans l’archive du site.<br><a href="/recherche?q=${s.title}">Chercher « ${s.title} » dans les articles et le forum →</a></p>`}
+  ${text ? lyricsBlock(text) : html`<p class="no-lyrics">Les paroles de cette chanson ne figurent pas encore sur le portail.<br><a href="/recherche?q=${s.title}">Chercher « ${s.title} » dans les articles et le forum →</a></p>`}
   <aside class="song-aside">
     ${text ? mentions(text.id) : ""}
     ${sameYear.length ? html`<section class="box"><h2>En ${s.year}, il écrivait aussi</h2><ul class="plain cols">${sameYear.map((x) => html`<li><a href="${songUrl(x)}">${x.title}</a>${x.text_id ? html` <span class="dot" title="paroles disponibles">♪</span>` : ""}</li>`)}</ul></section>` : ""}
@@ -201,14 +201,14 @@ export function renderTextIndex(): string {
 ${pageHeader({
   kicker: "Le répertoire",
   title: "Poèmes, lettres et documents",
-  lede: "Les textes de l’archive qui ne figurent pas au catalogue des chansons : poèmes de jeunesse, lettres de Paul Fort ou de Max-Pol Fouchet, chansons des amis (Brassens…) et documents.",
+  lede: "Les textes du portail qui ne figurent pas au catalogue des chansons : poèmes de jeunesse, lettres de Paul Fort ou de Max-Pol Fouchet, chansons des amis (Brassens…) et documents.",
 })}
 <div class="text-groups">
 ${groups.filter(([, , list]) => list.length).map(([kind, label, list]) => html`<section id="${kind}"><h2>${label} <span class="muted">${list.length}</span></h2><ul class="plain">${list.map((t) => html`<li><a href="${canonicalTextUrl(t)}">${t.title}</a>${t.author !== "Charles Trenet" ? html` <span class="muted">— ${t.author}</span>` : ""}</li>`)}</ul></section>`)}
 </div>`;
   return layout({
     title: "Poèmes, lettres et documents",
-    description: "Poèmes de jeunesse de Charles Trenet, lettres de Paul Fort et de Max-Pol Fouchet, chansons de ses amis et documents : les textes de l’archive hors du catalogue des chansons.",
+    description: "Poèmes de jeunesse de Charles Trenet, lettres de Paul Fort et de Max-Pol Fouchet, chansons de ses amis et documents : les textes du portail hors du catalogue des chansons.",
     path: "/textes",
     section: "chansons",
     body,

@@ -1,7 +1,12 @@
 # charles-trenet.net
 
-The "amis de Charles Trenet" portal (2001–2021), rebuilt in 2026 as a **read-only
-archive**: Bun + SQLite, zero runtime dependencies, no accounts, no admin, no forms.
+"Le portail des amis de Charles Trenet" (since 2001), rebuilt in 2026: Bun +
+SQLite, zero runtime dependencies, no accounts, no admin, no forms. The forum is
+kept as archives (it was replaced by the official Facebook page); everything else
+is presented as a living site: articles show no publication date.
+
+The home page title is `HERO_TITLE` in `src/views/home.ts`: change it from time to
+time, to show that the portal is alive.
 
 ## Run
 
@@ -47,12 +52,12 @@ pass `--site-url https://www.example.org`; links are then written without the
 
 | Path | |
 |---|---|
-| `/articles` (`/articles/populaires`, `/articles/anciens`) | 151 articles (2001–2020) by theme, series ("Les grands moments", "Sa route enchantée") and author, with the 302 original reader comments |
+| `/articles` (`/articles/populaires`, `/articles/anciens`) | 151 articles by theme, series ("Les grands moments", "Sa route enchantée") and author, with the 302 original reader comments |
 | `/chansons` | the 502-song catalogue (per-year histogram, instant filter); 308 with lyrics |
 | `/textes` | poems, letters, documents, and songs outside the catalogue |
 | `/chronologie` | his life 1913–2001, linked to the articles |
-| `/forum` | 469 threads / 2,092 posts (2002–2021), read-only; pages are `…/page/2` |
-| `/agenda`, `/liens`, `/a-propos` | archives (every link also offers its Internet Archive copy) |
+| `/forum` | the forum archives: 467 threads / 2,089 posts (2002–2021), read-only; pages are `…/page/2` |
+| `/agenda`, `/liens`, `/a-propos` | events, the links that still work, the story of the portal |
 | `/recherche` | accent-insensitive full-text search (SQLite FTS5) + type-ahead suggestions |
 | `/flux.xml`, `/sitemap.xml` | articles RSS feed, sitemap |
 
@@ -96,6 +101,7 @@ are kept in memory.
 - rewrites every internal link and image to the new URLs;
 - rebuilds the song catalogue, lyrics (title, credits, publisher), timeline, and
   forum (BBCode → HTML, smilies → emoji);
+- removes the links that lead nowhere any more (see below);
 - repairs accents the old DB turned into `?` (vocabulary + character-bigram stats
   learned from the clean text), the Mac Roman / Windows-1252 mix in lyric pages,
   and titles typed in CAPITALS;
@@ -114,6 +120,17 @@ kept, with the full history of the old site, in the **private** repository
     bun run migrate        # --dump, --legacy, --out, --media to change paths
 
 The output is deterministic (same input → same database).
+
+### Dead links
+
+`bun scripts/check-links.ts` checks online every site of the "Liens" page and every
+link to a video (YouTube and Dailymotion through their APIs, Vimeo, INA,
+Facebook…), and writes the dead ones to `scripts/migrate/dead-links.json`. The
+migration reads that list: a dead site leaves the "Liens" page; a dead video
+disappears with its embed and its thumbnail, a link in a sentence keeps its
+words, and a forum message left empty is dropped. Verdicts a robot cannot reach
+(sites that block robots, YouTube rate limits) are set by hand in the script.
+Re-run it from time to time, then `bun run migrate`.
 
 ## Tests
 

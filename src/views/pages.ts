@@ -2,7 +2,7 @@ import { meta, pagedUrl, queries, songUrl, stats, threadUrl, type Forum, type Se
 import { formatDate, formatMonth, formatNumber, plural, summary, year } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
 import { breadcrumbs, monogram, pageHeader, pagination } from "./components.ts";
-import { layout, SITE_URL, TRENET } from "./layout.ts";
+import { FACEBOOK_URL, layout, SITE_URL, TRENET } from "./layout.ts";
 
 // --- Chronologie ---------------------------------------------------------------
 
@@ -43,7 +43,7 @@ ${rows.map((r, i) => {
 
 // --- Forum ---------------------------------------------------------------------
 
-const archiveNotice = html`<p class="notice"><strong>Forum archivé.</strong> Ouvert en juin 2002, le forum est aujourd’hui fermé : les discussions restent lisibles, mais on ne peut plus y répondre. Les adresses électroniques ont été masquées.</p>`;
+const archiveNotice = html`<p class="notice"><strong>Les archives du forum.</strong> Ouvert en juin 2002, le forum des amis de Charles Trenet a laissé la place à <a href="${FACEBOOK_URL}" rel="noopener">la page Facebook officielle</a>, où les échanges se poursuivent. Ses discussions restent consultables ici ; les adresses électroniques ont été masquées.</p>`;
 
 export function renderForumIndex(): string {
   const forums = queries.forums.all();
@@ -168,7 +168,7 @@ export function renderAgenda(): string {
   const byYear = new Map<string, typeof items>();
   for (const it of items) byYear.set(year(it.event_date), [...(byYear.get(year(it.event_date)) ?? []), it]);
   const body = html`
-${pageHeader({ kicker: "Archives", title: "L’agenda", lede: "Concerts, spectacles, émissions et expositions autour de Charles Trenet, annoncés sur le portail de 2002 à 2018." })}
+${pageHeader({ kicker: "Agenda", title: "L’agenda", lede: "Concerts, spectacles, émissions et expositions autour de Charles Trenet, annoncés sur le portail." })}
 <div class="agenda">
 ${[...byYear].map(([y, list]) => html`<section><h2 class="year">${y}</h2>
   ${list.map((it) => {
@@ -182,8 +182,8 @@ ${[...byYear].map(([y, list]) => html`<section><h2 class="year">${y}</h2>
 </section>`)}
 </div>`;
   return layout({
-    title: "L’agenda (archives)",
-    description: "Concerts hommages, spectacles, expositions et émissions autour de Charles Trenet annoncés sur le portail de 2002 à 2018.",
+    title: "L’agenda",
+    description: "Concerts hommages, spectacles, expositions et émissions autour de Charles Trenet annoncés sur le portail.",
     path: "/agenda",
     section: "agenda",
     body,
@@ -196,19 +196,19 @@ export function renderLinks(): string {
   const cats = queries.linkCategories.all();
   const links = queries.links.all();
   const body = html`
-${pageHeader({ kicker: "Archives", title: "Liens", lede: "Les sites recommandés par le portail depuis 2001. Beaucoup ont disparu depuis : chaque lien propose aussi sa copie sur Internet Archive." })}
+${pageHeader({ kicker: "Liens", title: "Liens", lede: html`Les sites recommandés par le portail. Pour suivre l’actualité de Charles Trenet, rendez-vous aussi sur <a href="${FACEBOOK_URL}" rel="noopener">sa page Facebook officielle</a>.` })}
 <div class="links">
 ${cats.map((c) => {
   const list = links.filter((l) => l.category_id === c.id);
   if (!list.length) return "";
   const parent = c.parent_id ? cats.find((p) => p.id === c.parent_id) : undefined;
   return html`<section><h2>${parent ? html`<span class="muted">${parent.title} › </span>` : ""}${c.title}</h2>${c.description ? html`<p class="muted">${c.description}</p>` : ""}
-  <ul class="link-list">${list.map((l) => html`<li><a href="${l.url}" rel="noopener nofollow">${l.title}</a> <a class="wayback" href="https://web.archive.org/web/${year(l.added_at)}/${l.url}" rel="noopener nofollow" title="Version archivée">archive</a>${l.description ? html`<p>${l.description}</p>` : ""}</li>`)}</ul></section>`;
+  <ul class="link-list">${list.map((l) => html`<li><a href="${l.url}" rel="noopener nofollow">${l.title}</a>${l.description ? html`<p>${l.description}</p>` : ""}</li>`)}</ul></section>`;
 })}
 </div>`;
   return layout({
     title: "Liens",
-    description: "Les sites consacrés à Charles Trenet recommandés par le portail depuis 2001, avec pour chacun sa copie archivée sur Internet Archive.",
+    description: "Les sites consacrés à Charles Trenet et à ses amis poètes recommandés par le portail des amis de Charles Trenet.",
     path: "/liens",
     section: "liens",
     body,
@@ -221,7 +221,7 @@ export function renderAbout(): string {
   const why = queries.page.get("pourquoi");
   const critic = queries.page.get("critique");
   const body = html`
-${pageHeader({ kicker: "À propos", title: "Le portail des amis de Charles Trenet", lede: "Vingt ans de passion partagée, désormais préservés en archive." })}
+${pageHeader({ kicker: "À propos", title: "Le portail des amis de Charles Trenet", lede: "Vingt-cinq ans de passion partagée, et un portail qui continue sa route." })}
 <div class="about prose">
   <figure class="float-right"><img src="${meta.poster_image}" alt="Affiche Disques Pathé, avril 1934 : les duettistes Charles et Johnny" width="216" height="300" loading="lazy"><figcaption>Disques Pathé, avril 1934 : « les duettistes Charles &amp; Johnny ».</figcaption></figure>
   <h2>${why?.title ?? "Pourquoi ce portail ?"}</h2>
@@ -229,19 +229,18 @@ ${pageHeader({ kicker: "À propos", title: "Le portail des amis de Charles Trene
   <p class="signature">— Dominic Daussaint, fondateur et webmestre</p>
   <h2>${critic?.title ?? ""}</h2>
   ${raw(critic?.body_html)}
-  <h2 id="archive">Une archive en lecture seule</h2>
-  <p>Créé en août 2001, quelques mois après la disparition du poète, le portail a publié ${formatNumber(stats.articles)} articles, réuni un catalogue de ${formatNumber(stats.songs)} chansons et accueilli ${formatNumber(stats.posts)} messages sur son forum. Il fonctionnait sous PostNuke, un système de 2001.</p>
-  <p>En 2026, le site a été entièrement reconstruit pour préserver ce travail : tout le contenu public a été repris — articles, commentaires, paroles, poèmes, chronologie, agenda et forum —, nettoyé, et rendu consultable sur téléphone comme sur ordinateur. Les comptes, l’espace d’administration, les formulaires et les inscriptions ont disparu : <strong>plus rien ne s’écrit, tout se lit</strong>.</p>
+  <h2 id="renouveau">Un portail entièrement renouvelé</h2>
+  <p>Créé en août 2001, quelques mois après la disparition du poète, le portail a publié ${formatNumber(stats.articles)} articles, réuni un catalogue de ${formatNumber(stats.songs)} chansons et accueilli ${formatNumber(stats.posts)} messages sur son forum.</p>
+  <p>Son environnement technique, devenu obsolète avec les années, a été entièrement modernisé en 2026 : tout le contenu — articles, commentaires, paroles, poèmes, chronologie, agenda — a été repris, nettoyé et rendu agréable à lire sur téléphone comme sur ordinateur. Le portail peut désormais être <strong>régulièrement actualisé</strong>, et il le sera.</p>
   <ul>
+    <li>Le forum, ouvert en 2002, a laissé la place à <a href="${FACEBOOK_URL}" rel="noopener">la page Facebook officielle</a>, où les échanges se poursuivent. Ses discussions restent consultables sur <a href="/forum">les archives du forum</a>.</li>
     <li>Les adresses électroniques présentes dans les messages ont été masquées ; aucune donnée personnelle des anciens membres n’a été conservée.</li>
-    <li>Les accents perdus par l’ancienne base de données ont été restaurés automatiquement ; il peut subsister quelques coquilles.</li>
-    <li>Les anciennes adresses (<code>modules.php?…</code>, <code>chansons/….html</code>) redirigent vers les nouvelles pages.</li>
+    <li>Les anciennes adresses du site (<code>modules.php?…</code>, <code>chansons/….html</code>) mènent aux nouvelles pages.</li>
   </ul>
-  <p>Pour suivre l’actualité de Charles Trenet aujourd’hui, rendez-vous sur <a href="https://www.facebook.com/charlestrenet" rel="noopener">la page Charles Trenet sur Facebook</a>.</p>
 </div>`;
   return layout({
     title: "À propos",
-    description: "L’histoire du portail des amis de Charles Trenet, créé en 2001 par Dominic Daussaint, et de son archive : ce qui a été conservé, restauré et fermé.",
+    description: "L’histoire du portail des amis de Charles Trenet, créé en 2001 par Dominic Daussaint et entièrement renouvelé en 2026.",
     path: "/a-propos",
     section: "a-propos",
     body,

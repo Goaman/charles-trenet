@@ -1,5 +1,5 @@
 import { articleUrl, queries, type ArticleSummary, type Song, type Theme } from "../db.ts";
-import { formatDate, formatNumber, hue, year } from "../format.ts";
+import { formatNumber, hue, plural } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
 import { SITE_URL } from "./layout.ts";
 
@@ -21,10 +21,10 @@ export function articleCard(a: ArticleSummary, opts: { size?: "lg" | "md" | "sm"
     ? html`<a class="card-media" href="${articleUrl(a)}" tabindex="-1" aria-hidden="true"><img src="${a.cover_url}" alt="" width="${a.cover_width}" height="${a.cover_height}" loading="lazy" decoding="async"></a>`
     : ""}
   <div class="card-body">
-    <p class="kicker">${a.series ? html`<a href="/series/${seriesSlug(a.series)}">${a.series}${a.series_part ? html` · ${a.series_part}` : ""}</a>` : opts.showTheme !== false && theme ? html`<a href="/themes/${theme.slug}">${theme.name}</a>` : html`<span>${year(a.published_at)}</span>`}</p>
+    <p class="kicker">${a.series ? html`<a href="/series/${seriesSlug(a.series)}">${a.series}${a.series_part ? html` · ${a.series_part}` : ""}</a>` : opts.showTheme !== false && theme ? html`<a href="/themes/${theme.slug}">${theme.name}</a>` : html`<span>Article</span>`}</p>
     <h3 class="card-title"><a href="${articleUrl(a)}">${a.title}</a></h3>
     ${size !== "sm" ? html`<p class="card-excerpt">${a.excerpt}</p>` : ""}
-    <p class="byline">${a.author ? html`<span>${a.author}</span> · ` : ""}<time datetime="${a.published_at}">${formatDate(a.published_at)}</time> · ${a.reading_minutes}&nbsp;min</p>
+    <p class="byline">${a.author ? html`<span>${a.author}</span> · ` : ""}${a.reading_minutes}&nbsp;min de lecture</p>
   </div>
 </article>`;
 }
@@ -32,10 +32,10 @@ export function articleCard(a: ArticleSummary, opts: { size?: "lg" | "md" | "sm"
 export function articleRow(a: ArticleSummary): SafeHtml {
   const theme = a.theme_id ? themesById().get(a.theme_id) : undefined;
   return html`<li class="row">
-  <time class="row-date" datetime="${a.published_at}">${formatDate(a.published_at)}</time>
+  <span class="row-date">${theme ? theme.name : a.series ?? a.category ?? "Article"}</span>
   <div class="row-main">
     <a class="row-title" href="${articleUrl(a)}">${a.series && a.series_part ? html`<span class="part">${a.series_part}.</span> ` : ""}${a.title}</a>
-    <span class="row-meta">${a.author ? html`${a.author} · ` : ""}${theme ? theme.name : ""}${a.comment_count ? html` · ${a.comment_count}&nbsp;comm.` : ""}</span>
+    <span class="row-meta">${a.author ?? ""}${a.comment_count ? html`${a.author ? " · " : ""}${plural(a.comment_count, "commentaire", "commentaires")}` : ""}</span>
   </div>
   <span class="row-aside">${a.reading_minutes}&nbsp;min</span>
 </li>`;
@@ -94,5 +94,5 @@ export function pageHeader(o: { kicker?: SafeHtml | string; title: string | Safe
 </header>`;
 }
 
-export const views = (n: number) => (n ? html`<span title="Lectures sur l’ancien site">${formatNumber(n)}&nbsp;lectures</span>` : "");
+export const views = (n: number) => (n ? html`<span>${formatNumber(n)}&nbsp;lectures</span>` : "");
 export const ornament = raw(`<div class="ornament" aria-hidden="true"><span>✦</span></div>`);

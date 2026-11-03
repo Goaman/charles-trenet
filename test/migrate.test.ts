@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { balance, cleanHtml, finalize } from "../scripts/migrate/clean-html.ts";
 import { bbcodeToHtml } from "../scripts/migrate/bbcode.ts";
 import { naturalTitle } from "../scripts/migrate/songs.ts";
+import { normalizeUrl, removeDeadLinks, videoKey } from "../scripts/migrate/dead-links.ts";
 import { decodeEntities, repairLegacyChars, repairQuestionMarks, slugify, smartTitle, typography, Vocabulary } from "../scripts/migrate/text.ts";
 
 const opts = { resolveLink: (h: string) => h.replace("http://www.charles-trenet.net", ""), resolveImage: (src: string) => ({ src: `/media/${src.split("/").pop()}`, width: 300, height: 200 }) };
@@ -94,5 +95,30 @@ describe("bbcode", () => {
   });
   test("escapes HTML", () => {
     expect(bbcodeToHtml('<script>alert(1)</script>', o)).not.toContain("<script>");
+  });
+});
+
+describe("dead links", () => {
+  const dead = Object.assign(new Set(["http://youtu.be/deaddeadAAA", "http://www.dailymotion.com/video/xdead", "http://gone.example/page.html"].map(normalizeUrl)), {
+    noEmbed: new Set(["onlyOnYTube"]),
+  });
+  test("a dead video disappears with its embed and its thumbnail", () => {
+    const html = '<p>Avant.</p>\n<figure data-youtube="deaddeadAAA"><a href="https://www.youtube.com/watch?v=deaddeadAAA">Voir la vidéo sur YouTube</a></figure>\n<p><a href="https://www.youtube.com/watch?v=deaddeadAAA&amp;feature=related"><img src="/media/video-x.jpg" alt=""></a></p>\n<p>Après.</p>';
+    expect(removeDeadLinks(html, dead)).toBe("<p>Avant.</p>\n<p>Après.</p>");
+  });
+  test("bare addresses and 'voir la vidéo' go; words in a sentence stay", () => {
+    expect(removeDeadLinks('<p>La mer<br><a href="http://www.dailymotion.com/video/xdead">www.dailymotion.com/video/xdead…</a></p>', dead)).toBe("<p>La mer<br></p>");
+    expect(removeDeadLinks('<p><a href="http://youtu.be/deaddeadAAA">Voir la vidéo</a></p>', dead)).toBe("");
+    expect(removeDeadLinks('<p>pour <em><a href="http://youtu.be/deaddeadAAA">Le temps qui passe</a></em>, et</p>', dead)).toBe("<p>pour <em>Le temps qui passe</em>, et</p>");
+    expect(removeDeadLinks('<p>Voir <a href="http://gone.example/page.html">ce site</a> et <a href="https://alive.example/">celui-ci</a>.</p>', dead)).toBe('<p>Voir ce site et <a href="https://alive.example/">celui-ci</a>.</p>');
+  });
+  test("videos that only play on YouTube become a link", () => {
+    expect(removeDeadLinks('<figure data-youtube="onlyOnYTube"><a href="https://www.youtube.com/watch?v=onlyOnYTube">Voir la vidéo sur YouTube</a></figure>', dead)).toContain('<p><a href="https://www.youtube.com/watch?v=onlyOnYTube"');
+  });
+  test("recognises video addresses", () => {
+    expect(videoKey("http://de.youtube.com/watch?v=7qhbJYtIiAI&amp;feature=related")).toEqual({ service: "youtube", id: "7qhbJYtIiAI" });
+    expect(videoKey("http://youtu.be/g701EAbCANo_blank")).toEqual({ service: "youtube", id: "g701EAbCANo" });
+    expect(videoKey("http://www.dailymotion.com/video/xif8v_charles-trenet-la-mer_news")).toEqual({ service: "dailymotion", id: "xif8v" });
+    expect(videoKey("http://fr.wikipedia.org/wiki/Charles_Trenet")).toBeNull();
   });
 });

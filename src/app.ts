@@ -181,7 +181,7 @@ export async function handle(req: Request): Promise<Response> {
   if (path.startsWith("/assets/") || path.startsWith("/media/")) {
     return (await serveStatic(req, path)) ?? notFound(req, path);
   }
-  if (path === "/favicon.ico") return redirect("/assets/favicon.svg");
+  if (path === "/favicon.ico") return redirect("/assets/favicon.png");
 
   if (path === "/") {
     // Home changes daily (song and "ce jour-là"): cache per day.
