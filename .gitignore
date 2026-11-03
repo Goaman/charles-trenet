@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+*.log
+.DS_Store
+# Migration inputs (restored from git history, see README)
+data/
+legacy/
+db/*.tmp

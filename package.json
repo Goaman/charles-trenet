@@ -1,0 +1,19 @@
+{
+  "name": "charles-trenet",
+  "private": true,
+  "type": "module",
+  "description": "charles-trenet.net — archive en lecture seule du portail des amis de Charles Trenet",
+  "scripts": {
+    "start": "bun src/server.ts",
+    "dev": "bun --watch src/server.ts",
+    "migrate": "bun scripts/migrate/index.ts",
+    "export": "bun scripts/export.ts",
+    "preview": "bun scripts/preview.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}
