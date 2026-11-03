@@ -47,8 +47,8 @@ const NAV: [PageOptions["section"], string, string][] = [
   ["a-propos", "/a-propos", "À propos"],
 ];
 
-/** The logo (it replaced the little hat): Charles Trenet, thumbs up. */
-const logo = (cls: string) => html`<img class="${cls}" src="${assetUrl("charles-trenet.jpg")}" alt="" width="212" height="156">`;
+/** The logo: a drawing of Charles Trenet, blue eyes and a red carnation. */
+const logo = (cls: string) => html`<img class="${cls}" src="${assetUrl("charles-trenet-dessin.png")}" alt="" width="200" height="310">`;
 
 export function layout(o: PageOptions): string {
   const url = SITE_URL + (o.canonical ?? o.path);

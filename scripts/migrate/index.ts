@@ -16,6 +16,7 @@ import { resolveLegacyUrl, type LegacyLookup } from "../../src/legacy.ts";
 import { bbcodeToHtml } from "./bbcode.ts";
 import { cleanHtml, decodeSafeEntities, finalize, type CleanOptions } from "./clean-html.ts";
 import { isDead, removeDeadLinks } from "./dead-links.ts";
+import { applyAdditions, CONTENT_MEDIA } from "./additions.ts";
 import { MediaLibrary } from "./media.ts";
 import { loadDump, type Row } from "./mysql-dump.ts";
 import { listLegacyTexts, parseCatalogue, splitLyrics } from "./songs.ts";
@@ -379,6 +380,7 @@ for (const s of stories) {
   currentMentions = null;
   let { author, html } = extractByline(intro);
   intro = html;
+  body = applyAdditions(id, body); // new entries (discography, bibliographies)
   if (!author) {
     const b = extractByline(body);
     if (b.author) [author, body] = [b.author, b.html];
@@ -586,6 +588,7 @@ insert("ephemerides", ephemOut);
 insert("link_categories", linkCats);
 insert("links", linksOut);
 insert("pages", pagesOut);
+media.addLocal(CONTENT_MEDIA); // after the old images: their names stay as they were
 insert("media", media.all().map((m) => ({ url: m.url, legacy_path: m.legacyPath, width: m.width ?? null, height: m.height ?? null, bytes: m.bytes })));
 
 // Full-text search index

@@ -123,7 +123,7 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 .masthead-inner { width: min(100% - 2 * var(--gap), var(--wrap)); margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; height: 4.25rem; }
 .brand { display: flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--ink); flex-shrink: 0; }
 .brand:hover { color: var(--ink); }
-.brand-logo { display: block; height: 2.9rem; width: auto; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
+.brand-logo { display: block; height: 3.2rem; width: auto; border-radius: 5px; box-shadow: 0 0 0 1px var(--line); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
 .brand:hover .brand-logo { transform: rotate(-4deg) translateY(-1px); }
 
 /* The banner of the original site, above the navigation (not sticky) */
@@ -593,7 +593,7 @@ a.song-title:hover { color: var(--red); text-decoration: underline; }
 .colophon { background: var(--ink); color: color-mix(in srgb, var(--paper) 80%, var(--ink)); margin-top: 2rem; }
 :root[data-dark] .colophon { background: #0d0f14; color: var(--ink-2); }
 .colophon-inner { width: min(100% - 2 * var(--gap), var(--wrap)); margin: 0 auto; padding: 3.5rem 0 2rem; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; }
-.colophon-logo { display: block; width: 7.5rem; height: auto; border-radius: 8px; margin-bottom: 1rem; }
+.colophon-logo { display: block; width: 5.5rem; height: auto; border-radius: 8px; margin-bottom: 1rem; }
 .colophon strong { color: var(--paper); font: 600 1.15rem var(--display); }
 :root[data-dark] .colophon strong { color: var(--ink); }
 .colophon h2 { font: 600 .74rem var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }

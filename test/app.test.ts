@@ -131,6 +131,17 @@ describe("SEO", () => {
       expect(body).not.toContain(`"datePublished":"${a.published_at}"`);
     }
   });
+  test("new entries: Intégrale 13–16, three books, Les Rois fainéants", async () => {
+    const disco = await (await get("/articles/34-sa-discographie-disponible")).text();
+    for (const v of [13, 14, 15, 16]) expect(disco).toContain(`Intégrale vol. ${v} –`);
+    expect(disco.indexOf("Intégrale vol. 16")).toBeLessThan(disco.indexOf("Anthologie I"));
+    const autour = await (await get("/articles/40-bibliographie-autour-de-charles-trenet")).text();
+    for (const t of ["LA VIE QUI VA", "LA RÉVOLUTION TRENET", "QUE RESTE-T-IL DU FOU CHANTANT"]) expect(autour).toContain(t);
+    const oeuvres = await (await get("/articles/17-bibliographie-de-ses-oeuvres")).text();
+    expect(oeuvres.indexOf("LES ROIS FAINÉANTS")).toBeGreaterThan(0);
+    expect(oeuvres.indexOf("LES ROIS FAINÉANTS")).toBeLessThan(oeuvres.indexOf("QUELQUES RECUEILS"));
+    for (const img of ["integrale-vol-16.jpg", "rois-faineants.jpg"]) expect((await get(`/media/${img}`)).status).toBe(200);
+  });
   test("no 'archive' outside the forum", async () => {
     for (const path of ["/", "/articles", "/a-propos", "/liens", "/agenda", "/textes"]) {
       // The content may speak of archives ("les archives de l’INA"): only the site’s own words count

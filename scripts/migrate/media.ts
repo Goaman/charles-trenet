@@ -146,6 +146,20 @@ export class MediaLibrary {
     return file;
   }
 
+  /** Add the new images of content/media (kept under their own names). */
+  addLocal(dir: string): void {
+    for (const name of readdirSync(dir).sort()) {
+      if (!IMAGE_EXT.test(name)) continue;
+      if (this.names.has(name)) throw new Error(`content/media/${name}: name already used by an old image`);
+      this.names.add(name);
+      const buf = readFileSync(join(dir, name));
+      mkdirSync(this.outDir, { recursive: true });
+      copyFileSync(join(dir, name), join(this.outDir, name));
+      const rel = `content/media/${name}`;
+      this.used.set(rel, { legacyPath: rel, url: `/media/${name}`, bytes: buf.length, ...imageSize(buf) });
+    }
+  }
+
   all(): MediaFile[] {
     return [...this.used.values()];
   }

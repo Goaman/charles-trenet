@@ -121,6 +121,14 @@ kept, with the full history of the old site, in the **private** repository
 
 The output is deterministic (same input → same database).
 
+### New content
+
+Entries added since the old site (Intégrale volumes 13–16, recent books, *Les
+Rois fainéants*) are in `scripts/migrate/additions.ts`: each one is inserted into
+an article, before a given piece of its HTML or at its end, and its images live
+in `content/media/` (copied to `public/media/` by the migration). Add an entry
+there, then `bun run migrate`.
+
 ### Dead links
 
 `bun scripts/check-links.ts` checks online every site of the "Liens" page and every
