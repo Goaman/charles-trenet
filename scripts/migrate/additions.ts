@@ -5,7 +5,8 @@
  *
  * Their images live in content/media/ (the migration copies them to
  * public/media/). Each addition is inserted before a piece of the article
- * (`before`), or at its end; a missing anchor fails the migration.
+ * (`before`), or at its end, or replaces it (`replace`); a missing anchor
+ * fails the migration.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -25,10 +26,18 @@ interface Addition {
   article: number;
   /** Insert before this (exact) piece of the article's HTML; at the end if absent. */
   before?: string;
+  /** Replace this (exact) piece of the article's HTML. */
+  replace?: string;
   html: () => string;
 }
 
 export const ADDITIONS: Addition[] = [
+  // --- Discographie: the Intégrale now goes on with Vincent Lisita and Pascal Halbeher --
+  {
+    article: 34,
+    replace: "<p>Nous accordons, bien sûr, la place qu'elle mérite à l'Intégrale Charles Trenet qui est éditée chez Frémeaux et Associés, sous la direction de Daniel Nevers... même si ces double-CD ne sortent malheureusement qu'au compte goutte.</p>",
+    html: () => `<p>Nous accordons, bien sûr, la place qu’elle mérite à l’Intégrale Charles Trenet, éditée chez Frémeaux et Associés, sous la direction de Daniel Nevers jusqu’au vol. 12, puis par Vincent Lisita et Pascal Halbeher qui ont pris la relève. Ces deux passionnés ont recherché, identifié, documenté, numérisé et restauré des œuvres rares, parfois oubliées, jusqu’à ce vol. 16 sorti récemment. Pour la suite, nous devrons malheureusement patienter pour des raisons de droits d’auteur.</p>`,
+  },
   // --- Bibliographie de ses œuvres: his first novel, found again --------------------
   {
     article: 17,
@@ -55,6 +64,11 @@ export function applyAdditions(articleId: number, html: string): string {
   let out = html;
   for (const a of ADDITIONS.filter((x) => x.article === articleId)) {
     const add = nbsp(a.html().trim());
+    if (a.replace) {
+      if (!out.includes(a.replace)) throw new Error(`Addition to article ${articleId}: text to replace not found: ${a.replace.slice(0, 60)}…`);
+      out = out.replace(a.replace, add);
+      continue;
+    }
     if (!a.before) {
       out = `${out.trimEnd()}\n${add}`;
       continue;

@@ -152,6 +152,21 @@ describe("SEO", () => {
       if (!path.includes("17-")) expect(body).not.toMatch(/<u>|4ème de couverture|CD 1/);
     }
   });
+  test("Intégrale: Vincent Lisita and Pascal Halbeher took over from Daniel Nevers", async () => {
+    const disco = await (await get("/articles/34-sa-discographie-disponible")).text();
+    expect(disco).toContain("puis par Vincent Lisita et Pascal Halbeher qui ont pris la relève");
+    expect(disco).not.toContain("compte goutte");
+  });
+  test("home: the four references, authors of the most read; footer: contact and copyright", async () => {
+    const home = await (await get("/")).text();
+    for (const href of ["/articles/34-", "/articles/13-", "/articles/40-", "/articles/17-"]) expect(home).toMatch(new RegExp(`<nav class="references"[\\s\\S]*href="${href}`));
+    const popular = home.slice(home.indexOf('class="popular"'), home.indexOf("</aside>", home.indexOf('class="popular"')));
+    expect(popular).toContain("par ");
+    expect(home).toContain('href="mailto:dominic@alvos.com"');
+    expect(home).toContain("Code de la propriété intellectuelle");
+    expect(home).not.toContain("brand-logo");
+    expect(home).toContain("colophon-logo");
+  });
   test("agenda: Nelson Monfort in Brussels, 29 November 2026", async () => {
     const body = await (await get("/agenda")).text();
     expect(body).toContain("Nelson Monfort raconte et chante Charles Trenet");

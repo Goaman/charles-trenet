@@ -8,6 +8,14 @@ import { layout, SITE_NAME, SITE_URL, TRENET } from "./layout.ts";
  * The title of the home page. Change it from time to time, to show that the
  * portal is alive (a line of a song suits it well).
  */
+/** The four reference articles, the most sought-after pages of the portal. */
+export const REFERENCES: [href: string, label: string, sub: string][] = [
+  ["/articles/34-sa-discographie-disponible", "Discographie", "L’Intégrale et les disques disponibles"],
+  ["/articles/13-toute-sa-filmographie", "Filmographie", "De «\u00a0La Route enchantée\u00a0» à «\u00a0Printemps à Paris\u00a0»"],
+  ["/articles/40-bibliographie-autour-de-charles-trenet", "Bibliographie", "Les livres consacrés à Charles Trenet"],
+  ["/articles/17-bibliographie-de-ses-oeuvres", "Ses œuvres littéraires", "Romans, poèmes, recueils de chansons"],
+];
+
 export const HERO_TITLE = { title: "Longtemps après les poètes…", sub: "… leurs chansons courent encore dans les rues." };
 
 /** Added to the welcome text of the old site. */
@@ -92,6 +100,11 @@ export function renderHome(now = new Date()): string {
   ${peleMele()}
 </section>
 
+<nav class="references" aria-labelledby="references-title">
+  <h2 class="visually-hidden" id="references-title">Les références</h2>
+  <ul>${REFERENCES.map(([href, label, sub]) => html`<li><a href="${href}"><strong>${label}</strong><span>${sub}</span></a></li>`)}</ul>
+</nav>
+
 <section class="stats" aria-label="Le portail en chiffres">
   <ul>
     <li><a href="/articles"><strong>${formatNumber(stats.articles)}</strong> articles</a></li>
@@ -125,7 +138,7 @@ export function renderHome(now = new Date()): string {
     ${articleCard(featured, { size: "lg" })}
     <aside class="popular">
       <h3>Les plus lus</h3>
-      <ol>${popular.map((a) => html`<li><a href="${articleUrl(a)}">${a.title}</a><span>${formatNumber(a.legacy_views)} lectures</span></li>`)}</ol>
+      <ol>${popular.map((a) => html`<li><a href="${articleUrl(a)}">${a.title}</a><span>${a.author ? html`par ${a.author} · ` : ""}${formatNumber(a.legacy_views)} lectures</span></li>`)}</ol>
     </aside>
   </div>
 </section>

@@ -6,6 +6,7 @@ import { CSP_META, STATIC } from "../mode.ts";
 
 export const SITE_NAME = "Le portail des amis de Charles Trenet";
 /** The official Facebook page, which took over from the forum. */
+export const CONTACT_EMAIL = "dominic@alvos.com";
 export const FACEBOOK_URL = "https://www.facebook.com/charlestrenet";
 export const SITE_URL = (process.env.SITE_URL ?? "https://www.charles-trenet.net").replace(/\/$/, "");
 
@@ -94,17 +95,11 @@ ${o.jsonLd ? raw(`<script type="application/ld+json">${JSON.stringify(o.jsonLd).
 <a class="skip" href="#contenu">Aller au contenu</a>
 <div class="banner">
   <a href="/" aria-label="Accueil — ${SITE_NAME}">
-    <picture>
-      <source media="(max-width: 700px)" srcset="${assetUrl("banniere-etroite.png")}" width="675" height="81">
-      <img src="${assetUrl("banniere.png")}" alt="${SITE_NAME}" width="991" height="81">
-    </picture>
+    <img src="${assetUrl("banniere.png")}" alt="${SITE_NAME}" width="1353" height="206">
   </a>
 </div>
 <header class="masthead">
   <div class="masthead-inner">
-    <a class="brand" href="/" aria-label="Accueil — ${SITE_NAME}">
-      ${logo("brand-logo")}
-    </a>
     <nav class="nav" aria-label="Navigation principale">
       <ul>
         ${NAV.map(([key, href, label]) => html`<li><a href="${href}"${o.section === key ? raw(' aria-current="page"') : ""}>${label}</a></li>`)}
@@ -139,6 +134,7 @@ ${content}
       ${logo("colophon-logo")}
       <p><strong>Le portail des amis de Charles Trenet</strong><br>Créé en 2001 par Dominic Daussaint, nourri depuis par ses lecteurs et régulièrement enrichi.</p>
       <p class="colophon-note">L’actualité de Charles Trenet et les échanges entre ses admirateurs se poursuivent sur <a href="${FACEBOOK_URL}" rel="noopener">la page Facebook officielle</a>.</p>
+      <p class="colophon-contact">Pour proposer un article ou contacter Dominic Daussaint&nbsp;: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
     </div>
     <nav aria-label="Plan du site">
       <h2>Explorer</h2>
@@ -161,7 +157,7 @@ ${content}
       </ul>
     </nav>
   </div>
-  <p class="fineprint">Les textes des chansons et poèmes restent la propriété de leurs auteurs et éditeurs ; ils sont reproduits ici à des fins de documentation, comme sur le site d’origine.</p>
+  <p class="fineprint">Les textes des chansons et poèmes restent la propriété de leurs auteurs et éditeurs ; ils sont reproduits ici à des fins de documentation, comme sur le site d’origine.<br>Conformément au Code de la propriété intellectuelle, toute exploitation (représentation ou reproduction) de tout ou partie du site internet est strictement interdite sauf autorisation expresse et préalable d’Alvos Films – Dominic Daussaint.</p>
 </footer>
 </body>
 </html>`.value

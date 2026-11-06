@@ -123,13 +123,11 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 .masthead-inner { width: min(100% - 2 * var(--gap), var(--wrap)); margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; height: 4.25rem; }
 .brand { display: flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--ink); flex-shrink: 0; }
 .brand:hover { color: var(--ink); }
-.brand-logo { display: block; height: 3.2rem; width: auto; border-radius: 5px; box-shadow: 0 0 0 1px var(--line); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
-.brand:hover .brand-logo { transform: rotate(-4deg) translateY(-1px); }
 
 /* The banner of the original site, above the navigation (not sticky) */
 .banner { width: min(100% - 2 * var(--gap), var(--wrap)); margin: 0 auto; padding: .9rem 0 .7rem; }
 .banner a { display: block; width: fit-content; max-width: 100%; }
-.banner img { display: block; width: 100%; max-width: 991px; height: auto; }
+.banner img { display: block; width: 100%; max-width: 1000px; height: auto; }
 .nav { margin-left: auto; }
 .nav ul { display: flex; gap: .2rem; list-style: none; margin: 0; padding: 0; }
 .nav a { display: block; padding: .45rem .7rem; font: 500 .93rem/1 var(--ui); color: var(--ink-2); text-decoration: none; border-radius: 999px; }
@@ -204,6 +202,16 @@ a.print:hover, a.print:focus-visible { z-index: 20; rotate: 0deg; scale: 1.06; b
   .print-caption { font-size: .72rem; }
   .print { padding: .3rem .3rem 1.5rem; }
 }
+
+/* The four reference pages, right under the hero */
+.references ul { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; }
+.references a { display: flex; flex-direction: column; gap: .3rem; height: 100%; padding: .9rem 1rem .95rem; border: 1px solid var(--line-2); border-left: 4px solid var(--red); border-radius: 4px; background: var(--paper-2); color: var(--ink-2); text-decoration: none; transition: transform .15s, border-color .15s; }
+.references strong { font: 700 1.02rem/1.2 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+.references span { font: .84rem/1.35 var(--ui); color: var(--muted); }
+.references a:hover { transform: translateY(-2px); border-color: var(--red); }
+.references a:hover strong { color: var(--red); }
+@media (max-width: 900px) { .references ul { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 420px) { .references strong { font-size: .9rem; letter-spacing: .06em; } .references span { display: none; } }
 
 .stats ul { list-style: none; margin: 0 0 3rem; padding: 1.1rem 0; display: grid; grid-template-columns: repeat(4, 1fr); border-block: 2px solid var(--ink); }
 .stats li + li { border-left: 1px solid var(--line); }
@@ -631,6 +639,7 @@ a.song-title:hover { color: var(--red); text-decoration: underline; }
 .colophon a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
 .colophon a:hover { color: var(--gold); }
 .colophon-note { font-size: .92rem; }
+.colophon-contact { font-size: .85rem; opacity: .85; }
 .fineprint { width: min(100% - 2 * var(--gap), var(--wrap)); margin: 0 auto; padding: 1.25rem 0 2rem; border-top: 1px solid rgb(255 255 255 / .12); font: .78rem/1.5 var(--ui); opacity: .7; }
 @media (max-width: 760px) { .colophon-inner { grid-template-columns: 1fr 1fr; } .colophon-brand { grid-column: 1 / -1; } }
 
