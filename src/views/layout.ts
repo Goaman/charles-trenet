@@ -95,7 +95,10 @@ ${o.jsonLd ? raw(`<script type="application/ld+json">${JSON.stringify(o.jsonLd).
 <a class="skip" href="#contenu">Aller au contenu</a>
 <div class="banner">
   <a href="/" aria-label="Accueil — ${SITE_NAME}">
-    <img src="${assetUrl("banniere.png")}" alt="${SITE_NAME}" width="1353" height="206">
+    <picture>
+      <source type="image/webp" srcset="${assetUrl("banniere.webp")}">
+      <img src="${assetUrl("banniere.png")}" alt="${SITE_NAME}" width="1353" height="206">
+    </picture>
   </a>
 </div>
 <header class="masthead">
