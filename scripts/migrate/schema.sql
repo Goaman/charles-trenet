@@ -173,7 +173,8 @@ CREATE TABLE media (
   legacy_path TEXT NOT NULL UNIQUE,
   width INTEGER,
   height INTEGER,
-  bytes INTEGER NOT NULL
+  bytes INTEGER NOT NULL,
+  clip TEXT -- clip-path hiding the frame baked into the image, if any (frames.ts)
 );
 
 -- Full-text search, accent-insensitive ("theatre" finds "théâtre").

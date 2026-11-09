@@ -144,6 +144,16 @@ words, and a forum message left empty is dropped. Verdicts a robot cannot reach
 (sites that block robots, YouTube rate limits) are set by hand in the script.
 Re-run it from time to time, then `bun run migrate`.
 
+### Image frames
+
+Many old pictures have a white border and a grey drop shadow drawn into the
+file. `bun scripts/detect-frames.ts` (needs ImageMagick; run it after a
+migration, on `public/media/`) measures them and writes
+`scripts/migrate/frames.json`. The migration then clips those edges where the
+image is shown (`clip-path`, also stored in `media.clip` for the article
+covers), so every picture sits directly on the page, on the light theme as on
+the dark one. The files themselves are left untouched.
+
 ## Tests
 
     bun test               # migration (cleaning, accents, titles, BBCode), every page and redirect, static export

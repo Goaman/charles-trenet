@@ -1,7 +1,7 @@
 import { articleUrl, queries, type Article, type ArticleSummary, type Comment } from "../db.ts";
 import { formatDate, formatNumber, plural, seeded, summary, year } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
-import { articleCard, articleRow, breadcrumbs, monogram, pageHeader, seriesSlug, themesById } from "./components.ts";
+import { articleCard, articleRow, clipAttr, breadcrumbs, monogram, pageHeader, seriesSlug, themesById } from "./components.ts";
 import { layout, SITE_URL } from "./layout.ts";
 
 export function authorSlug(name: string): string {
@@ -96,7 +96,7 @@ ${pageHeader({ crumbs: breadcrumbs([["Articles", "/articles"], [s.name]]), kicke
   ${items.map((a) => html`<li><a href="${articleUrl(a)}">
     <span class="episode-num">${a.series_part ?? "◆"}</span>
     <span class="episode-body"><span class="episode-title">${a.title}</span><span class="episode-excerpt">${a.excerpt}</span><span class="byline">${a.author ? `${a.author} · ` : ""}${a.reading_minutes}&nbsp;min de lecture</span></span>
-    ${a.cover_url ? html`<img src="${a.cover_url}" alt="" width="${a.cover_width}" height="${a.cover_height}" loading="lazy">` : ""}
+    ${a.cover_url ? html`<img src="${a.cover_url}"${clipAttr(a.cover_url, "crop")} alt="" width="${a.cover_width}" height="${a.cover_height}" loading="lazy">` : ""}
   </a></li>`)}
 </ol>`;
   return layout({ title: s.name, description: s.lede, path: `/series/${slug}`, section: "articles", body });

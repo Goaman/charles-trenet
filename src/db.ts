@@ -129,6 +129,10 @@ export const stats = {
   posts: q.postCount.get()!.n,
 };
 
+/** clip-path hiding the frame baked into a /media image (see scripts/migrate/frames.ts). */
+const clips = new Map(db.query<{ url: string; clip: string }, []>("SELECT url, clip FROM media WHERE clip IS NOT NULL").all().map((m) => [m.url, m.clip]));
+export const mediaClip = (url: string | null | undefined): string | undefined => (url ? clips.get(url) : undefined);
+
 export function articleUrl(a: { id: number; slug: string }) {
   return `/articles/${a.id}-${a.slug}`;
 }

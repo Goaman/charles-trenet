@@ -1,7 +1,7 @@
 import { articleUrl, queries, songUrl, stats, threadUrl, type Ephemeris } from "../db.ts";
 import { formatDate, formatDayMonth, formatNumber, parisToday, seeded } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
-import { articleCard, seriesSlug } from "./components.ts";
+import { articleCard, clipAttr, seriesSlug } from "./components.ts";
 import { layout, SITE_NAME, SITE_URL, TRENET } from "./layout.ts";
 
 /**
@@ -40,7 +40,7 @@ function peleMele(): SafeHtml {
   return html`<figure class="pele-mele" aria-label="Charles Trenet de 1936 à 1999">
   ${PELE_MELE.map((p, i) => {
     const a = byId.get(p.article);
-    const img = html`<img src="${p.src}" alt="${p.alt}" width="${p.w}" height="${p.h}"${i < 3 ? raw(' fetchpriority="high"') : raw(' loading="lazy"')} decoding="async"><span class="print-caption">${p.caption}</span>`;
+    const img = html`<img src="${p.src}"${clipAttr(p.src)} alt="${p.alt}" width="${p.w}" height="${p.h}"${i < 3 ? raw(' fetchpriority="high"') : raw(' loading="lazy"')} decoding="async"><span class="print-caption">${p.caption}</span>`;
     const style = `--x:${p.x}%;--y:${p.y}%;--size:${p.size}%;--tilt:${p.tilt}deg;--z:${PELE_MELE.length - i}`;
     return a ? html`<a class="print" href="${articleUrl(a)}" style="${style}" title="${a.title}">${img}</a>` : html`<span class="print" style="${style}">${img}</span>`;
   })}

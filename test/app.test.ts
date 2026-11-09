@@ -167,6 +167,11 @@ describe("SEO", () => {
     expect(home).not.toContain("brand-logo");
     expect(home).toContain("colophon-logo");
   });
+  test("frames baked into old images are clipped, clean covers are left alone", async () => {
+    const disco = await (await get("/articles/34-sa-discographie-disponible")).text();
+    expect(disco).toMatch(/<img style="clip-path:inset\([\d.]+% [\d.]+% [\d.]+% [\d.]+%\)" src="\/media\/cd-integrale-vol-1\.jpg"/);
+    expect(disco).toMatch(/<img src="\/media\/integrale-vol-13\.jpg"/);
+  });
   test("agenda: Nelson Monfort in Brussels, 29 November 2026", async () => {
     const body = await (await get("/agenda")).text();
     expect(body).toContain("Nelson Monfort raconte et chante Charles Trenet");

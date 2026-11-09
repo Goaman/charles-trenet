@@ -154,7 +154,7 @@
     dlg.addEventListener("click", () => dlg.close());
     zoomable.forEach((img) => {
       if (img.closest("a")) return;
-      img.addEventListener("click", () => { big.src = img.currentSrc || img.src; big.alt = img.alt; dlg.showModal(); });
+      img.addEventListener("click", () => { big.src = img.currentSrc || img.src; big.alt = img.alt; big.style.clipPath = img.style.clipPath; dlg.showModal(); });
     });
   }
 

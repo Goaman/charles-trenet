@@ -18,7 +18,8 @@ import { cleanHtml, decodeSafeEntities, finalize, type CleanOptions } from "./cl
 import { isDead, removeDeadLinks } from "./dead-links.ts";
 import { agendaAdditions, applyAdditions, CONTENT_MEDIA } from "./additions.ts";
 import { applyCatalog } from "./catalogs.ts";
-import { MediaLibrary } from "./media.ts";
+import { clipFrames, frameClip } from "./frames.ts";
+import { imageSize, MediaLibrary } from "./media.ts";
 import { loadDump, type Row } from "./mysql-dump.ts";
 import { listLegacyTexts, parseCatalogue, splitLyrics } from "./songs.ts";
 import {
@@ -548,6 +549,14 @@ db.run("PRAGMA journal_mode = OFF");
 db.run("PRAGMA synchronous = OFF");
 db.exec(readFileSync(join(import.meta.dir, "schema.sql"), "utf8"));
 
+/** Size of a /media image, for clipping its baked frame (see frames.ts). */
+let sizes = new Map<string, { width?: number; height?: number }>();
+function mediaSize(url: string) {
+  if (sizes.size !== media.all().length) sizes = new Map(media.all().map((m) => [m.url, m]));
+  const name = url.slice("/media/".length);
+  return sizes.get(url) ?? (url.startsWith("/media/") && existsSync(join(CONTENT_MEDIA, name)) ? imageSize(readFileSync(join(CONTENT_MEDIA, name))) : undefined);
+}
+
 function insert(table: string, items: Record<string, unknown>[]) {
   if (!items.length) return;
   const cols = Object.keys(items[0]!);
@@ -556,7 +565,7 @@ function insert(table: string, items: Record<string, unknown>[]) {
     for (const it of items)
       stmt.run(...(cols.map((c) => {
         const v = (it[c] ?? null) as string | number | null;
-        return c.endsWith("_html") && typeof v === "string" ? finalize(v) : v;
+        return c.endsWith("_html") && typeof v === "string" ? finalize(clipFrames(v, mediaSize)) : v;
       })));
   })();
 }
@@ -590,7 +599,7 @@ insert("link_categories", linkCats);
 insert("links", linksOut);
 insert("pages", pagesOut);
 media.addLocal(CONTENT_MEDIA); // after the old images: their names stay as they were
-insert("media", media.all().map((m) => ({ url: m.url, legacy_path: m.legacyPath, width: m.width ?? null, height: m.height ?? null, bytes: m.bytes })));
+insert("media", media.all().map((m) => ({ url: m.url, legacy_path: m.legacyPath, width: m.width ?? null, height: m.height ?? null, bytes: m.bytes, clip: frameClip(m.url, m.width, m.height) })));
 
 // Full-text search index
 const idx = db.prepare("INSERT INTO search (kind, url, title, body, meta) VALUES (?, ?, ?, ?, ?)");

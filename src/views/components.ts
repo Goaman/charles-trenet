@@ -1,4 +1,4 @@
-import { articleUrl, queries, type ArticleSummary, type Song, type Theme } from "../db.ts";
+import { articleUrl, mediaClip, queries, type ArticleSummary, type Song, type Theme } from "../db.ts";
 import { formatNumber, hue, plural } from "../format.ts";
 import { html, raw, type SafeHtml } from "../html.ts";
 import { SITE_URL } from "./layout.ts";
@@ -18,7 +18,7 @@ export function articleCard(a: ArticleSummary, opts: { size?: "lg" | "md" | "sm"
   const size = opts.size ?? "md";
   return html`<article class="card card-${size}${a.cover_url ? "" : " no-cover"}">
   ${a.cover_url
-    ? html`<a class="card-media" href="${articleUrl(a)}" tabindex="-1" aria-hidden="true"><img src="${a.cover_url}" alt="" width="${a.cover_width}" height="${a.cover_height}" loading="lazy" decoding="async"></a>`
+    ? html`<a class="card-media" href="${articleUrl(a)}" tabindex="-1" aria-hidden="true"><img src="${a.cover_url}"${clipAttr(a.cover_url, "crop")} alt="" width="${a.cover_width}" height="${a.cover_height}" loading="lazy" decoding="async"></a>`
     : ""}
   <div class="card-body">
     <p class="kicker">${a.series ? html`<a href="/series/${seriesSlug(a.series)}">${a.series}${a.series_part ? html` · ${a.series_part}` : ""}</a>` : opts.showTheme !== false && theme ? html`<a href="/themes/${theme.slug}">${theme.name}</a>` : html`<span>Article</span>`}</p>
@@ -27,6 +27,17 @@ export function articleCard(a: ArticleSummary, opts: { size?: "lg" | "md" | "sm"
     <p class="byline">${a.author ? html`<span>${a.author}</span> · ` : ""}${a.reading_minutes}&nbsp;min de lecture</p>
   </div>
 </article>`;
+}
+
+/**
+ * style attribute hiding the frame baked into an old image, if it has one.
+ * "clip" for an image shown whole; "crop" for one fitted with object-fit:
+ * cover (thumbnails), where the frame is cropped out of the source instead.
+ */
+export function clipAttr(url: string | null | undefined, how: "clip" | "crop" = "clip"): SafeHtml {
+  const clip = mediaClip(url);
+  if (!clip) return html``;
+  return how === "clip" ? html` style="clip-path:${clip}"` : html` style="object-view-box:${clip}"`;
 }
 
 export function articleRow(a: ArticleSummary): SafeHtml {
